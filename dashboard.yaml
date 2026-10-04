@@ -1,0 +1,110 @@
+title: Katzenklappe
+views:
+  - title: Katzenklappe
+    path: klappe
+    icon: mdi:cat
+    type: masonry
+    cards:
+      - type: entities
+        title: Katzenklappe
+        show_header_toggle: false
+        entities:
+          - entity: binary_sensor.katzenklappe_verbindung
+            name: Verbindung
+          - entity: binary_sensor.katzenklappe_erkennung_bereit
+            name: Erkennung bereit
+          - entity: sensor.katzenklappe_letzte_oeffnungsrichtung
+            name: Letzte Öffnungsrichtung
+          - entity: sensor.katzenklappe_oeffnungen_seit_neustart
+            name: Öffnungen seit Neustart
+          - entity: switch.katzenklappe_testmodus
+            name: Testmodus
+      - type: conditional
+        conditions:
+          - condition: state
+            entity: sensor.katzenklappe_akkuspannung
+            state_not: [unknown, unavailable]
+        card:
+          type: entities
+          title: Akku
+          show_header_toggle: false
+          entities:
+            - entity: sensor.katzenklappe_akkuspannung
+              name: Akkuspannung
+            - entity: binary_sensor.katzenklappe_akku_niedrig
+              name: Akku niedrig
+      - type: conditional
+        conditions:
+          - condition: state
+            entity: sensor.katzenklappe_rfid_zuordnung
+            state_not: [unknown, unavailable]
+        card:
+          type: entities
+          title: Katzenerkennung
+          show_header_toggle: false
+          entities:
+            - entity: sensor.katzenklappe_rfid_zuordnung
+              name: Letztes Leseergebnis
+            - entity: text.katzenklappe_erlaubte_chipnummer
+              name: Chipnummer deiner Katze
+      - type: conditional
+        conditions:
+          - condition: state
+            entity: switch.katzenklappe_testmodus
+            state: 'on'
+        card:
+          type: vertical-stack
+          cards:
+            - type: markdown
+              content: >-
+                **Testmodus aktiv** · Die Kontakte werden simuliert.
+                Echte Kontakte werden in diesem Modus ignoriert.
+                Testmeldungen gehen als TEST an das konfigurierte Handy.
+            - type: entities
+              title: Öffnung testen
+              show_header_toggle: false
+              entities:
+                - entity: switch.katzenklappe_testkontakt_innen
+                  name: Testkontakt innen
+                - entity: switch.katzenklappe_testkontakt_aussen
+                  name: Testkontakt außen
+                - entity: sensor.katzenklappe_letzte_testrichtung
+                  name: Letzte Testrichtung
+                - entity: sensor.katzenklappe_testoeffnungen_seit_neustart
+                  name: Testöffnungen seit Neustart
+                - entity: event.katzenklappe_testoeffnung
+                  name: Letztes Testereignis
+                - type: section
+                  label: Echte Kontakte zur Anschlussprüfung
+                - entity: binary_sensor.katzenklappe_kontakt_innen
+                  name: Kontakt innen
+                - entity: binary_sensor.katzenklappe_kontakt_aussen
+                  name: Kontakt außen
+            - type: entities
+              title: Katzenchip testen
+              show_header_toggle: false
+              entities:
+                - entity: text.katzenklappe_erlaubte_chipnummer
+                  name: Chipnummer deiner Katze (gespeichert)
+                - entity: text.katzenklappe_test_chipnummer
+                  name: Simulierte Chipnummer
+                - entity: button.katzenklappe_test_chip_lesen
+                  name: Chiplesung simulieren
+                - entity: sensor.katzenklappe_rfid_teststatus
+                  name: Testergebnis
+            - type: entities
+              title: Akkuwarnung testen
+              show_header_toggle: false
+              entities:
+                - entity: number.katzenklappe_test_akkuspannung
+                  name: Simulierte Akkuspannung
+                - entity: button.katzenklappe_test_akku_pruefen
+                  name: Testspannung prüfen
+                - entity: sensor.katzenklappe_akku_testmesswert
+                  name: Letzter Testmesswert
+                - entity: sensor.katzenklappe_akku_teststatus
+                  name: Testergebnis
+                - entity: binary_sensor.katzenklappe_akku_testwarnung
+                  name: Testwarnung
+                - entity: event.katzenklappe_akku_testereignis
+                  name: Letztes Testereignis

@@ -1,0 +1,33 @@
+# Neue Home-Assistant-Automation im YAML-Modus. Entity-IDs abgleichen.
+alias: Katzenklappe - Oeffnungsrichtung melden
+description: Push auf konfiguriertes Handy. Oeffnungsrichtung, kein bestaetigter Durchgang. Tests kennzeichnen.
+triggers:
+  - trigger: state
+    entity_id: event.katzenklappe_oeffnung
+    id: echt
+  - trigger: state
+    entity_id: event.katzenklappe_testoeffnung
+    id: test
+conditions:
+  - condition: template
+    value_template: >-
+      {{ trigger.from_state is not none and trigger.to_state is not none
+         and trigger.from_state.state != 'unavailable'
+         and trigger.to_state.state not in ['unknown', 'unavailable']
+         and trigger.from_state.state != trigger.to_state.state
+         and trigger.to_state.attributes.get('event_type') in ['innen', 'aussen', 'unklar'] }}
+actions:
+  - action: notify.mobile_app_dein_handy
+    data:
+      title: "{{ 'TEST - ' if trigger.id == 'test' else '' }}Katzenklappe"
+      message: >-
+        {% set richtung = trigger.to_state.attributes.get('event_type') %}
+        {% if richtung == 'unklar' %}
+          Die Katzenklappe wurde bewegt. Richtung unklar.
+        {% else %}
+          Die Katzenklappe wurde nach {{ 'innen' if richtung == 'innen' else 'außen' }} geöffnet.
+        {% endif %}
+      data:
+        tag: "katzenklappe_{{ trigger.id }}"
+mode: queued
+max: 10
