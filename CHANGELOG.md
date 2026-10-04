@@ -1,5 +1,15 @@
 # Changelog
 
+## v0.1.0-beta.3 — 2026-10-04
+
+- Optional local dashboard card follows the HA profile language (German/English).
+- Translated displayed direction, chip and battery states, including legacy German firmware.
+- Fixed German dashboard template alongside the English template.
+- Separate German/English notification language variable in both automation examples.
+- Added setup documentation and four automated localization tests.
+- Live profile switching and test-area visibility verified in Home Assistant.
+- Firmware and physical detection logic are unchanged.
+
 ## v0.1.0-beta.2 — 2026-10-04
 
 - English documentation, filenames, code identifiers, entity labels, dashboard and phone messages.

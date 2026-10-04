@@ -16,6 +16,14 @@ The English release preserves this logic but changes names, event types and disp
 
 These checks do not replace an ESPHome compilation of the translated examples or tests with mounted reed contacts, a real cat, RFID reader or battery. English examples have not been flashed onto the existing German installation.
 
+## Localization verification (beta.3)
+
+- Run `node --test tests/localization.test.mjs` with Node.js 20 or newer: four tests cover profile language, regional/fallback selection, bilingual state values, legacy entity mapping, and unchanged conditions/control targets.
+- Live HA profile switching from German to English and back translated dashboard labels, result rows and legacy event types. All three test groups appeared in both languages with Test mode on, then disappeared when it was turned off.
+- The profile was restored to German and Test mode was disabled after verification. No simulated opening, chip or battery action was triggered during the language checks.
+- All current YAML examples were parsed with duplicate-key detection. Notification templates were rendered for German/English, real/test events and all supported event types; invalid/startup events were checked against their guards.
+- ESPHome firmware is unchanged from beta.2. These checks do not constitute a new hardware or firmware compilation test.
+
 ## Simulate an opening
 
 1. Open the dashboard, enable Test mode and wait five seconds for Detection ready.

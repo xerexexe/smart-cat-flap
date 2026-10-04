@@ -2,7 +2,7 @@
 
 # Katzenklappe smart 🐈
 
-**Beta · v0.1.0-beta.2**
+**Beta · v0.1.0-beta.3**
 
 Eine vorhandene Katzenklappe im Fliegengitter mit einem **Seeed Studio XIAO ESP32-C6**, ESPHome und Home Assistant erweitern. Zwei Reedkontakte erfassen die Schwenkrichtung. Home Assistant meldet Öffnungen auf dem Handy. Ein Testmodus ermöglicht Softwaretests, bevor Sensoren, Akku und Tierchip-Leser vorhanden sind.
 
@@ -22,18 +22,26 @@ Die ursprüngliche deutsche Firmware wurde mit ESPHome **2026.9.1** auf einem ec
 | Akkubetrieb mit Deep Sleep | Noch nicht implementiert; Entwicklung per USB |
 | Antenne, Leser-Treiber und 3D-Druck | Geplant; noch nicht enthalten |
 
+## Sprache im Dashboard
+
+Das optionale automatische Dashboard folgt der Home-Assistant-Profilsprache: Deutsch zeigt deutsche Beschriftungen und Ergebnisse; andere Sprachen verwenden Englisch. Die Einrichtung steht in [LOCALIZATION.md](LOCALIZATION.md). Für die bestehende deutsche Firmware sind `entity_prefix: katzenklappe` und `legacy: true` vorgesehen; erneutes Flashen ist dafür nicht nötig. Namen in der Geräteverwaltung und in Detaildialogen bleiben wie registriert.
+
+Handy-Meldungen haben in jeder Automation eine eigene Variable `notification_language: en` oder `de`. Sie laufen auf dem Server und kennen kein gerade geöffnetes Benutzerprofil.
+
 ## Dateien
 
 - `cat-flap.yaml`: vollständiges ESPHome-Beispiel. Nur diese Datei als Geräte-Konfiguration verwenden.
 - `secrets.example.yaml`: Vorlage für lokale Zugangsdaten.
-- `dashboard.yaml`: vollständige Konfiguration für ein eigenes HA-Dashboard.
+- `dashboard-auto.yaml`, `frontend/smart-cat-flap-card.js`: automatische Sprache nach HA-Profil.
+- `dashboard.yaml`, `dashboard.de.yaml`: feste englische/deutsche Beschriftungen.
+- `LOCALIZATION.md`: Einrichtung und Unterstützung der vorhandenen deutschen Firmware.
 - `homeassistant-automation.yaml`: Öffnungsmeldungen auf das Handy.
 - `battery-notifications.yaml`: Akkuwarnungen und Entwarnungen; echte und simulierte Ereignisse getrennt.
 - `movement.yaml`, `extensions.yaml`: Referenzbausteine der vollständigen Konfiguration. Nicht zusätzlich zu `cat-flap.yaml` einfügen.
 - `TESTING.md`: Tests ohne neue Hardware und Grenzen der Beta.
 - `CHANGELOG.md`: Versionsübersicht.
 
-Die veröffentlichten Beispiele, Feldnamen und Meldungen sind auf Englisch. Die englischen Dateinamen gelten auch für diese Anleitung.
+Code und Dateinamen sind auf Englisch. Das Dashboard unterstützt Deutsch und Englisch; die Sprache der Meldungen ist separat einstellbar.
 
 ## Installation
 

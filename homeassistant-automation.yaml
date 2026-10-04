@@ -1,6 +1,10 @@
 # Create a Home Assistant automation in YAML mode and check entity IDs.
 alias: Smart Cat Flap - Opening notification
 description: Notify the configured phone; flap direction does not confirm a completed passage.
+# Choose notification language separately from the dashboard profile language.
+# Supported values: en, de. Unknown values use English.
+variables:
+  notification_language: en
 triggers:
   - trigger: state
     entity_id: event.smart_cat_flap_opening
@@ -19,13 +23,21 @@ conditions:
 actions:
   - action: notify.mobile_app_your_phone
     data:
-      title: "{{ 'TEST - ' if trigger.id == 'test' else '' }}Smart Cat Flap"
+      title: "{{ 'TEST - ' if trigger.id == 'test' else '' }}{{ 'Katzenklappe' if notification_language == 'de' else 'Smart Cat Flap' }}"
       message: >-
         {% set direction = trigger.to_state.attributes.get('event_type') %}
-        {% if direction == 'unclear' %}
-          The cat flap moved. Direction unclear.
+        {% if notification_language == 'de' %}
+          {% if direction == 'unclear' %}
+            Die Katzenklappe wurde bewegt. Richtung unklar.
+          {% else %}
+            Die Katzenklappe wurde nach {{ 'innen' if direction == 'inside' else 'außen' }} geöffnet.
+          {% endif %}
         {% else %}
-          The cat flap opened {{ 'inward' if direction == 'inside' else 'outward' }}.
+          {% if direction == 'unclear' %}
+            The cat flap moved. Direction unclear.
+          {% else %}
+            The cat flap opened {{ 'inward' if direction == 'inside' else 'outward' }}.
+          {% endif %}
         {% endif %}
       data:
         tag: "cat_flap_{{ trigger.id }}"

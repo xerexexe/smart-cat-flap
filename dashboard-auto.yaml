@@ -1,0 +1,11 @@
+# Install frontend/smart-cat-flap-card.js as a local HA dashboard resource first.
+title: Smart Cat Flap
+views:
+  - title: "🐈"
+    path: flap
+    icon: mdi:cat
+    type: masonry
+    cards:
+      - type: custom:smart-cat-flap-card
+        language: auto
+        entity_prefix: smart_cat_flap

@@ -1,6 +1,10 @@
 # Create a Home Assistant automation in YAML mode and check entity IDs.
 alias: Smart Cat Flap - Battery notification
 description: Notify the configured phone; real measurements and simulations are separate.
+# Choose notification language separately from the dashboard profile language.
+# Supported values: en, de. Unknown values use English.
+variables:
+  notification_language: en
 triggers:
   - trigger: state
     entity_id: event.smart_cat_flap_battery_warning
@@ -19,11 +23,16 @@ conditions:
 actions:
   - action: notify.mobile_app_your_phone
     data:
-      title: "{{ 'TEST - ' if trigger.id == 'test' else '' }}Smart Cat Flap Battery"
+      title: "{{ 'TEST - ' if trigger.id == 'test' else '' }}{{ 'Katzenklappe Akku' if notification_language == 'de' else 'Smart Cat Flap Battery' }}"
       message: >-
-        {{ 'The battery is low. Please recharge.'
-           if trigger.to_state.attributes.get('event_type') == 'low'
-           else 'The battery voltage has recovered above the warning threshold.' }}
+        {% set low = trigger.to_state.attributes.get('event_type') == 'low' %}
+        {% if notification_language == 'de' %}
+          {{ 'Der Akku ist niedrig. Bitte laden.' if low
+             else 'Die Akkuspannung liegt wieder oberhalb der Warnschwelle.' }}
+        {% else %}
+          {{ 'The battery is low. Please recharge.' if low
+             else 'The battery voltage has recovered above the warning threshold.' }}
+        {% endif %}
       data:
         tag: "cat_flap_battery_{{ trigger.id }}"
 mode: queued

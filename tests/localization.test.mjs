@@ -1,0 +1,46 @@
+import assert from 'node:assert/strict';
+import test from 'node:test';
+globalThis.HTMLElement = class {};
+globalThis.customElements = {get: () => true};
+globalThis.window = {};
+const {languageFor, translateState, buildConfig} = await import('../frontend/smart-cat-flap-card.js');
+
+test('profile language wins; German regions work and unsupported languages fall back to English', () => {
+  assert.equal(languageFor({locale:{language:'de-CH'},language:'en'}),'de');
+  assert.equal(languageFor({language:'de'}),'de');
+  assert.equal(languageFor({language:'fr'}),'en');
+  assert.equal(languageFor({language:'de'},'en'),'en');
+});
+
+test('German and English firmware states render in either language', () => {
+  assert.equal(translateState('innen','en'),'Inside');
+  assert.equal(translateState('outside','de'),'Außen');
+  assert.equal(translateState('fremder Chip','en'),'Unknown chip');
+  assert.equal(translateState('invalid reading','de'),'Ungültiger Messwert');
+  assert.equal(translateState('unknown','de'),'Unbekannt');
+  assert.equal(translateState('4.0','de'),'4.0');
+});
+
+test('localization preserves control targets and raw conditional states', () => {
+  const en = buildConfig('en'), de = buildConfig('de');
+  const collect = obj => {
+    if (Array.isArray(obj)) return obj.flatMap(collect);
+    if (!obj || typeof obj !== 'object') return [];
+    return [...(obj.entity ? [obj.entity] : []), ...Object.values(obj).flatMap(collect)];
+  };
+  assert.deepEqual(collect(en),collect(de));
+  assert.deepEqual(en.cards[3].conditions,de.cards[3].conditions);
+  assert.equal(de.cards[3].conditions[0].state,'on');
+  assert.deepEqual(de.cards[1].conditions[0].state_not,['unknown','unavailable']);
+  assert.equal(de.cards[0].title,'Katzenklappe');
+  assert.equal(en.cards[0].title,'Smart Cat Flap');
+});
+
+test('legacy German installation maps its controls and keeps real/test data separate', () => {
+  const config = buildConfig('de',{legacy:true,entity_prefix:'katzenklappe'});
+  assert.equal(config.cards[0].entities[4].entity,'switch.katzenklappe_testmodus');
+  assert.equal(config.cards[3].card.cards[1].entities[0].entity,'switch.katzenklappe_testkontakt_innen');
+  assert.equal(config.cards[2].card.entities[0].entity,'sensor.katzenklappe_rfid_zuordnung');
+  assert.equal(config.cards[3].card.cards[2].entities[3].entity,'sensor.katzenklappe_rfid_teststatus');
+  assert.throws(() => buildConfig('en',{entity_prefix:'invalid.prefix'}));
+});

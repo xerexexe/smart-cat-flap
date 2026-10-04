@@ -2,7 +2,7 @@
 
 **English** | [Deutsch](README.de.md)
 
-**Beta · v0.1.0-beta.2**
+**Beta · v0.1.0-beta.3**
 
 Add opening detection and Home Assistant notifications to an existing cat flap in a fly screen using a **Seeed Studio XIAO ESP32-C6** and ESPHome. Two reed contacts detect which way the flap swings. Test mode lets you exercise the software before the sensors, battery and animal microchip reader arrive.
 
@@ -22,11 +22,19 @@ The original firmware was built and tested with **ESPHome 2026.9.1** on a real X
 | Battery operation with deep sleep | Not implemented; development uses USB power |
 | Antenna, reader driver and 3D printed parts | Planned; not included |
 
+## Dashboard language
+
+The optional automatic dashboard follows the Home Assistant profile language: German profiles get German labels and results; other languages use English. See [LOCALIZATION.md](LOCALIZATION.md) for installation. Existing German firmware is supported without reflashing. Entity names in device settings and detail dialogs remain as registered.
+
+Phone notifications have a separate `notification_language: en` or `de` variable in each automation, because server-side notifications have no active browser profile.
+
 ## Files
 
 - `cat-flap.yaml`: complete ESPHome example. Use this as the device configuration.
 - `secrets.example.yaml`: template for local credentials.
-- `dashboard.yaml`: complete configuration for a dedicated HA dashboard.
+- `dashboard-auto.yaml`, `frontend/smart-cat-flap-card.js`: dashboard following your HA profile language.
+- `dashboard.yaml`, `dashboard.de.yaml`: fixed English/German dashboard labels.
+- `LOCALIZATION.md`: automatic language setup and legacy German firmware support.
 - `homeassistant-automation.yaml`: phone notifications for opening events.
 - `battery-notifications.yaml`: battery warnings and recovery notifications, with separate real and simulated events.
 - `movement.yaml`, `extensions.yaml`: reference fragments already included in `cat-flap.yaml`. Do not add them again.
@@ -50,7 +58,7 @@ The English example uses the device name `smart-cat-flap`, friendly name `Smart 
 
 Beta.2 uses English filenames, entity labels, internal identifiers, status messages and event types. Opening events are now `inside`, `outside`, `unclear`; battery events are `low`, `recovered`. Update the dashboard and both automations together with the firmware. Existing HA entity registry entries may retain earlier IDs after a firmware update: verify the actual IDs instead of assuming they were renamed automatically.
 
-The running device is not updated by publishing this repository. If keeping a German installation, continue using the beta.1 examples or explicitly adapt the English files to its existing names and event types.
+The running device is not updated by publishing this repository. For a German installation, the automatic dashboard supports `entity_prefix: katzenklappe` with `legacy: true`; keep the existing German automations or adapt the examples to its event types. See LOCALIZATION.md.
 
 ## Wiring the reed contacts
 

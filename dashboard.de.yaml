@@ -1,0 +1,113 @@
+title: Katzenklappe
+views:
+- title: Katzenklappe
+  path: flap
+  icon: mdi:cat
+  type: masonry
+  cards:
+  - type: entities
+    title: Katzenklappe
+    show_header_toggle: false
+    entities:
+    - entity: binary_sensor.smart_cat_flap_connection
+      name: Verbindung
+    - entity: binary_sensor.smart_cat_flap_detection_ready
+      name: Erkennung bereit
+    - entity: sensor.smart_cat_flap_last_opening_direction
+      name: Letzte Öffnungsrichtung
+    - entity: sensor.smart_cat_flap_openings_since_restart
+      name: Öffnungen seit Neustart
+    - entity: switch.smart_cat_flap_test_mode
+      name: Testmodus
+  - type: conditional
+    conditions:
+    - condition: state
+      entity: sensor.smart_cat_flap_battery_voltage
+      state_not:
+      - unknown
+      - unavailable
+    card:
+      type: entities
+      title: Akku
+      show_header_toggle: false
+      entities:
+      - entity: sensor.smart_cat_flap_battery_voltage
+        name: Akkuspannung
+      - entity: binary_sensor.smart_cat_flap_battery_low
+        name: Akku niedrig
+  - type: conditional
+    conditions:
+    - condition: state
+      entity: sensor.smart_cat_flap_rfid_match
+      state_not:
+      - unknown
+      - unavailable
+    card:
+      type: entities
+      title: Katzenerkennung
+      show_header_toggle: false
+      entities:
+      - entity: sensor.smart_cat_flap_rfid_match
+        name: Letztes Leseergebnis
+      - entity: text.smart_cat_flap_allowed_chip_id
+        name: Chipnummer deiner Katze
+  - type: conditional
+    conditions:
+    - condition: state
+      entity: switch.smart_cat_flap_test_mode
+      state: 'on'
+    card:
+      type: vertical-stack
+      cards:
+      - type: markdown
+        content: '**Testmodus aktiv** · Die Kontakte werden simuliert. Echte Kontakte
+          werden in diesem Modus ignoriert. Testmeldungen gehen als TEST an das konfigurierte
+          Handy.'
+      - type: entities
+        title: Öffnung testen
+        show_header_toggle: false
+        entities:
+        - entity: switch.smart_cat_flap_test_inside_contact
+          name: Testkontakt innen
+        - entity: switch.smart_cat_flap_test_outside_contact
+          name: Testkontakt außen
+        - entity: sensor.smart_cat_flap_last_test_direction
+          name: Letzte Testrichtung
+        - entity: sensor.smart_cat_flap_test_openings_since_restart
+          name: Testöffnungen seit Neustart
+        - entity: event.smart_cat_flap_test_opening
+          name: Letztes Testereignis
+        - type: section
+          label: Echte Kontakte zur Anschlussprüfung
+        - entity: binary_sensor.smart_cat_flap_inside_contact
+          name: Kontakt innen
+        - entity: binary_sensor.smart_cat_flap_outside_contact
+          name: Kontakt außen
+      - type: entities
+        title: Katzenchip testen
+        show_header_toggle: false
+        entities:
+        - entity: text.smart_cat_flap_allowed_chip_id
+          name: Chipnummer deiner Katze (gespeichert)
+        - entity: text.smart_cat_flap_test_chip_id
+          name: Simulierte Chipnummer
+        - entity: button.smart_cat_flap_test_read_chip
+          name: Chiplesung simulieren
+        - entity: sensor.smart_cat_flap_rfid_test_status
+          name: Testergebnis
+      - type: entities
+        title: Akkuwarnung testen
+        show_header_toggle: false
+        entities:
+        - entity: number.smart_cat_flap_test_battery_voltage
+          name: Simulierte Akkuspannung
+        - entity: button.smart_cat_flap_test_check_battery
+          name: Testspannung prüfen
+        - entity: sensor.smart_cat_flap_battery_test_reading
+          name: Letzter Testmesswert
+        - entity: sensor.smart_cat_flap_battery_test_status
+          name: Testergebnis
+        - entity: binary_sensor.smart_cat_flap_battery_test_warning
+          name: Testwarnung
+        - entity: event.smart_cat_flap_battery_test_event
+          name: Letztes Testereignis
