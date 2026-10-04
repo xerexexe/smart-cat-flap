@@ -1,0 +1,179 @@
+# Reference fragment: merge component lists into an existing configuration.
+# Keep existing Wi-Fi, API, OTA and board settings when migrating.
+# USB development mode; no deep sleep or physical battery measurement yet.
+globals:
+  - id: ready
+    type: bool
+    initial_value: 'false'
+  - id: quiet_timer_running
+    type: bool
+    initial_value: 'false'
+  - id: quiet_since
+    type: uint32_t
+    initial_value: '0'
+  - id: pending_direction
+    type: int
+    initial_value: '0'
+  - id: signal_since
+    type: uint32_t
+    initial_value: '0'
+  - id: real_count
+    type: uint32_t
+    initial_value: '0'
+  - id: test_count
+    type: uint32_t
+    initial_value: '0'
+
+binary_sensor:
+  - platform: gpio
+    id: inside_contact
+    name: Inside contact
+    pin:
+      number: GPIO0 # D0, contact closes to GND when the magnet approaches
+      inverted: true
+      mode:
+        input: true
+        pullup: true
+    filters:
+      - delayed_on_off: 50ms
+  - platform: gpio
+    id: outside_contact
+    name: Outside contact
+    pin:
+      number: GPIO1 # D1, contact closes to GND when the magnet approaches
+      inverted: true
+      mode:
+        input: true
+        pullup: true
+    filters:
+      - delayed_on_off: 50ms
+  - platform: template
+    name: Detection ready
+    entity_category: diagnostic
+    lambda: return id(ready);
+  - platform: status
+    name: Connection
+
+switch:
+  - platform: template
+    id: test_mode
+    name: Test mode
+    icon: mdi:test-tube
+    optimistic: true
+    restore_mode: ALWAYS_OFF
+    turn_on_action:
+      - script.execute: reset_detection
+    turn_off_action:
+      - script.execute: reset_detection
+  - platform: template
+    id: test_inside
+    name: Test inside contact
+    optimistic: true
+    restore_mode: ALWAYS_OFF
+  - platform: template
+    id: test_outside
+    name: Test outside contact
+    optimistic: true
+    restore_mode: ALWAYS_OFF
+
+text_sensor:
+  - platform: template
+    id: last_direction
+    name: Last opening direction
+    update_interval: never
+  - platform: template
+    id: last_test_direction
+    name: Last test direction
+    update_interval: never
+
+sensor:
+  - platform: template
+    id: real_counter
+    name: Openings since restart
+    accuracy_decimals: 0
+    state_class: total_increasing
+    lambda: return id(real_count);
+    update_interval: 1s
+  - platform: template
+    id: test_counter
+    name: Test openings since restart
+    accuracy_decimals: 0
+    lambda: return id(test_count);
+    update_interval: 1s
+
+event:
+  - platform: template
+    id: opening
+    name: Opening
+    event_types: [inside, outside, unclear]
+  - platform: template
+    id: test_opening
+    name: Test opening
+    event_types: [inside, outside, unclear]
+
+script:
+  - id: reset_detection
+    then:
+      - switch.turn_off: test_inside
+      - switch.turn_off: test_outside
+      - lambda: |-
+          id(ready) = false;
+          id(quiet_timer_running) = false;
+          id(pending_direction) = 0;
+  - id: report_movement
+    parameters:
+      direction: int
+      test: bool
+    then:
+      - lambda: |-
+          const std::string text = direction == 1 ? "inside" : direction == 2 ? "outside" : "unclear";
+          if (test) {
+            id(test_count)++;
+            id(last_test_direction).publish_state(text);
+            id(test_counter).publish_state(id(test_count));
+            id(test_opening).trigger(text);
+          } else {
+            id(real_count)++;
+            id(last_direction).publish_state(text);
+            id(real_counter).publish_state(id(real_count));
+            id(opening).trigger(text);
+          }
+          ESP_LOGI("cat_flap", "%sOpening direction: %s", test ? "TEST: " : "", text.c_str());
+
+interval:
+  - interval: 20ms
+    then:
+      - lambda: |-
+          const bool test = id(test_mode).state;
+          // Wait for valid, debounced GPIO states after boot.
+          if (!test && (!id(inside_contact).has_state() || !id(outside_contact).has_state())) return;
+          const bool inside = test ? id(test_inside).state : id(inside_contact).state;
+          const bool outside = test ? id(test_outside).state : id(outside_contact).state;
+          const uint32_t now = millis();
+
+          // Both signals within 100 ms make the direction ambiguous.
+          if (id(pending_direction) != 0) {
+            if ((id(pending_direction) == 1 && outside) || (id(pending_direction) == 2 && inside))
+              id(pending_direction) = 3;
+            if (static_cast<uint32_t>(now - id(signal_since)) >= 100) {
+              id(report_movement).execute(id(pending_direction), test);
+              id(pending_direction) = 0;
+            }
+          }
+
+          if (inside || outside) {
+            id(quiet_timer_running) = false;
+            if (id(ready)) {
+              id(ready) = false;
+              id(signal_since) = now;
+              id(pending_direction) = inside && outside ? 3 : inside ? 1 : 2;
+            }
+          } else {
+            if (!id(quiet_timer_running)) {
+              id(quiet_timer_running) = true;
+              id(quiet_since) = now;
+            }
+            // Unsigned subtraction handles millis() rollover.
+            if (id(pending_direction) == 0 && static_cast<uint32_t>(now - id(quiet_since)) >= 5000)
+              id(ready) = true;
+          }

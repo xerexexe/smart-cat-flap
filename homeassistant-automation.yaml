@@ -1,12 +1,12 @@
-# Neue Home-Assistant-Automation im YAML-Modus. Entity-IDs abgleichen.
-alias: Katzenklappe - Oeffnungsrichtung melden
-description: Push auf konfiguriertes Handy. Oeffnungsrichtung, kein bestaetigter Durchgang. Tests kennzeichnen.
+# Create a Home Assistant automation in YAML mode and check entity IDs.
+alias: Smart Cat Flap - Opening notification
+description: Notify the configured phone; flap direction does not confirm a completed passage.
 triggers:
   - trigger: state
-    entity_id: event.katzenklappe_oeffnung
-    id: echt
+    entity_id: event.smart_cat_flap_opening
+    id: real
   - trigger: state
-    entity_id: event.katzenklappe_testoeffnung
+    entity_id: event.smart_cat_flap_test_opening
     id: test
 conditions:
   - condition: template
@@ -15,19 +15,19 @@ conditions:
          and trigger.from_state.state != 'unavailable'
          and trigger.to_state.state not in ['unknown', 'unavailable']
          and trigger.from_state.state != trigger.to_state.state
-         and trigger.to_state.attributes.get('event_type') in ['innen', 'aussen', 'unklar'] }}
+         and trigger.to_state.attributes.get('event_type') in ['inside', 'outside', 'unclear'] }}
 actions:
-  - action: notify.mobile_app_dein_handy
+  - action: notify.mobile_app_your_phone
     data:
-      title: "{{ 'TEST - ' if trigger.id == 'test' else '' }}Katzenklappe"
+      title: "{{ 'TEST - ' if trigger.id == 'test' else '' }}Smart Cat Flap"
       message: >-
-        {% set richtung = trigger.to_state.attributes.get('event_type') %}
-        {% if richtung == 'unklar' %}
-          Die Katzenklappe wurde bewegt. Richtung unklar.
+        {% set direction = trigger.to_state.attributes.get('event_type') %}
+        {% if direction == 'unclear' %}
+          The cat flap moved. Direction unclear.
         {% else %}
-          Die Katzenklappe wurde nach {{ 'innen' if richtung == 'innen' else 'außen' }} geöffnet.
+          The cat flap opened {{ 'inward' if direction == 'inside' else 'outward' }}.
         {% endif %}
       data:
-        tag: "katzenklappe_{{ trigger.id }}"
+        tag: "cat_flap_{{ trigger.id }}"
 mode: queued
 max: 10

@@ -1,79 +1,87 @@
-# Katzenklappe smart 🐈
+# Smart Cat Flap 🐈
 
-**Beta · v0.1.0-beta.1**
+**English** | [Deutsch](README.de.md)
 
-Eine vorhandene Katzenklappe im Fliegengitter mit einem **Seeed Studio XIAO ESP32-C6**, ESPHome und Home Assistant erweitern. Zwei Reedkontakte erfassen die Schwenkrichtung. Home Assistant meldet Öffnungen auf dem Handy. Ein Testmodus ermöglicht Softwaretests, bevor Sensoren, Akku und Tierchip-Leser vorhanden sind.
+**Beta · v0.1.0-beta.2**
 
-Diese Beta wurde mit ESPHome **2026.9.1** auf einem echten XIAO ESP32-C6 getestet. Mechanische Tests an der eingebauten Klappe stehen noch aus. Die Schwenkrichtung ist kein Nachweis, dass eine Katze vollständig hinein- oder hinausgelaufen ist.
+Add opening detection and Home Assistant notifications to an existing cat flap in a fly screen using a **Seeed Studio XIAO ESP32-C6** and ESPHome. Two reed contacts detect which way the flap swings. Test mode lets you exercise the software before the sensors, battery and animal microchip reader arrive.
 
-## Funktionen und Stand
+The original firmware was built and tested with **ESPHome 2026.9.1** on a real XIAO ESP32-C6. This release translates the examples into English and preserves their detection logic. Mechanical installation tests are still pending. Flap direction alone does not prove that a cat has completed a passage.
 
-| Funktion | Beta-Stand |
+## Features and status
+
+| Feature | Beta status |
 |---|---|
-| Zwei Kontakte an GPIO0/GPIO1 | Implementiert; mechanische Montage noch zu testen |
-| Öffnungsrichtung innen, außen oder unklar | Implementiert; 50 ms Entprellung und 5 s Ruhezeit |
-| Handy-Benachrichtigungen | HA-Automationen; Zielgerät lokal eintragen |
-| Aufgeräumtes Dashboard | Testfelder erscheinen nur bei eingeschaltetem Testmodus |
-| Virtuelle Kontakte | Implementiert; echte Eingänge werden im Testmodus ignoriert |
-| Chipnummer-Abgleich | Software und Simulation vorhanden; echter RFID-Leser fehlt |
-| Akkuwarnung | Software und Simulation vorhanden; echte Spannungsmessung fehlt |
-| Akkubetrieb mit Deep Sleep | Noch nicht implementiert; Entwicklung per USB |
-| Antenne, Leser-Treiber und 3D-Druck | Geplant; noch nicht enthalten |
+| Two contacts on GPIO0/GPIO1 | Implemented; installation still needs physical testing |
+| Inside, outside or unclear opening direction | Implemented; 50 ms debounce and 5 s quiet period |
+| Phone notifications | HA automation examples; configure your own notification target |
+| Clean dashboard | Test controls and results appear only when test mode is on |
+| Virtual contacts | Implemented; physical inputs are ignored in test mode |
+| Chip ID matching | Software and simulation available; no physical RFID reader yet |
+| Battery warnings | Software and simulation available; no physical voltage measurement yet |
+| Battery operation with deep sleep | Not implemented; development uses USB power |
+| Antenna, reader driver and 3D printed parts | Planned; not included |
 
-## Dateien
+## Files
 
-- `katzenklappe.yaml`: vollständiges ESPHome-Beispiel. Nur diese Datei als Geräte-Konfiguration verwenden.
-- `secrets.example.yaml`: Vorlage für lokale Zugangsdaten.
-- `dashboard.yaml`: vollständige Konfiguration für ein eigenes HA-Dashboard.
-- `homeassistant-automation.yaml`: Öffnungsmeldungen auf das Handy.
-- `akku-benachrichtigung.yaml`: Akkuwarnungen und Entwarnungen; echte und simulierte Ereignisse getrennt.
-- `bewegung.yaml`, `erweiterungen.yaml`: Referenzbausteine der vollständigen Konfiguration. Nicht zusätzlich zu `katzenklappe.yaml` einfügen.
-- `TESTEN.md`: Tests ohne neue Hardware und Grenzen der Beta.
-- `CHANGELOG.md`: Versionsübersicht.
+- `cat-flap.yaml`: complete ESPHome example. Use this as the device configuration.
+- `secrets.example.yaml`: template for local credentials.
+- `dashboard.yaml`: complete configuration for a dedicated HA dashboard.
+- `homeassistant-automation.yaml`: phone notifications for opening events.
+- `battery-notifications.yaml`: battery warnings and recovery notifications, with separate real and simulated events.
+- `movement.yaml`, `extensions.yaml`: reference fragments already included in `cat-flap.yaml`. Do not add them again.
+- `TESTING.md`: tests without additional hardware and known limitations.
+- `CHANGELOG.md`: release history.
 
-## Installation
+## Setup
 
-1. ESPHome 2026.9.1 verwenden. Die Beispiele benötigen Home Assistant mit Unterstützung für ESPHome-Events, Textentitäten und die aktuelle Automationssyntax.
-2. `katzenklappe.yaml` in das ESPHome-Konfigurationsverzeichnis kopieren. Beim Einfügen in eine vorhandene Geräte-Konfiguration den bestehenden Gerätenamen sowie WLAN-, API- und OTA-Einstellungen erhalten. Ein geänderter Gerätename kann die Zuordnung in Home Assistant ändern.
-3. `secrets.example.yaml` als **lokale** `secrets.yaml` speichern und alle Platzhalter ersetzen. Einen gültigen ESPHome-API-Schlüssel erzeugen; das Beispiel enthält absichtlich keinen nutzbaren Schlüssel.
-4. Konfiguration mit ESPHome validieren, kompilieren und erstmals per USB installieren. Das Beispiel aktiviert API-Verschlüsselung und verschlüsselte ESPHome-OTA-Updates. Die installierte Firmware und ESPHome müssen diese OTA-Funktion unterstützen.
-5. Gerät über die ESPHome-Integration in Home Assistant hinzufügen.
-6. Die beiden Automationsdateien jeweils im YAML-Editor einer neuen Automation einfügen. **`notify.mobile_app_dein_handy` durch die tatsächliche Benachrichtigungsaktion ersetzen.** Entitätsnamen mit der eigenen Installation abgleichen.
-7. Unter Einstellungen → Dashboards ein leeres Dashboard erstellen. Im Raw-Konfigurationseditor `dashboard.yaml` einfügen. Dieser Inhalt ersetzt das ausgewählte Dashboard; deshalb ein eigenes leeres Dashboard verwenden.
-8. Bearbeitungsmodus verlassen und den Testmodus-Schalter ausprobieren. Im Bearbeitungsmodus zeigt Home Assistant bedingte Karten auch ohne erfüllte Bedingung an.
+1. Use ESPHome 2026.9.1. Home Assistant must support ESPHome event/text entities and the current automation syntax.
+2. Copy `cat-flap.yaml` into your ESPHome configuration directory. For an existing device, preserve its device name, Wi-Fi, API and OTA settings when merging changes. Changing a device name can change its Home Assistant registration.
+3. Copy `secrets.example.yaml` to a **local** `secrets.yaml` and replace every placeholder. Generate a valid ESPHome API encryption key; the template deliberately contains no usable key. Never commit the resulting secrets file.
+4. Validate and compile with ESPHome, then perform the first installation over USB. The example enables encrypted API communication and encrypted ESPHome OTA updates. Your ESPHome and installed firmware must support this OTA feature.
+5. Add the device using Home Assistant's ESPHome integration.
+6. Paste each automation file into the YAML editor of a new automation. Replace **`notify.mobile_app_your_phone`** with your actual notification action. Check all entity IDs against your installation.
+7. Create an empty dashboard under Settings → Dashboards and paste `dashboard.yaml` into its raw configuration editor. This replaces the selected dashboard configuration, so use a dedicated empty dashboard.
+8. Exit edit mode and toggle Test mode. Home Assistant shows conditional cards in edit mode even when their conditions are not satisfied.
 
-Das Dashboard erwartet Entitäten mit dem Präfix `katzenklappe_`. Bei einem anderen Gerätenamen oder bereits vorhandenen gleichnamigen Entitäten müssen die IDs angepasst werden. Die allgemeine Geräteverwaltung listet weiterhin alle Entitäten; die bedingte Anzeige gilt für das Dashboard.
+The English example uses the device name `smart-cat-flap`, friendly name `Smart Cat Flap` and entity prefix `smart_cat_flap_`. Custom names or existing entities with conflicting names require corresponding dashboard and automation changes. The device settings page still lists every entity; conditional visibility applies to the dashboard.
 
-## Anschluss der Reedkontakte
+## Migrating from beta.1
 
-| Kontakt | XIAO ESP32-C6 |
+Beta.2 uses English filenames, entity labels, internal identifiers, status messages and event types. Opening events are now `inside`, `outside`, `unclear`; battery events are `low`, `recovered`. Update the dashboard and both automations together with the firmware. Existing HA entity registry entries may retain earlier IDs after a firmware update: verify the actual IDs instead of assuming they were renamed automatically.
+
+The running device is not updated by publishing this repository. If keeping a German installation, continue using the beta.1 examples or explicitly adapt the English files to its existing names and event types.
+
+## Wiring the reed contacts
+
+| Contact | XIAO ESP32-C6 |
 |---|---|
-| Innen: potentialfreier Schließerkontakt | Zwischen **D0 / GPIO0** und **GND** |
-| Außen: potentialfreier Schließerkontakt | Zwischen **D1 / GPIO1** und **GND** |
+| Inside: dry normally open contact | Between **D0 / GPIO0** and **GND** |
+| Outside: dry normally open contact | Between **D1 / GPIO1** and **GND** |
 
-Interne Pull-ups sind aktiviert. Ein geschlossener Kontakt gegen GND wird als aktiv ausgewertet. Bei Kontakten mit COM/NO/NC die Schließerkombination durch Durchgangsmessung bestimmen. Keine Versorgungsspannung an diese Kontakte anlegen. Die Bezeichnung D0 ist ein Board-Pinname; die Firmware verwendet GPIO0.
+Internal pull-ups are enabled. A closed contact to GND is active. For contacts with COM/NO/NC terminals, identify the normally open pair with a continuity test. Do not apply a supply voltage to these inputs. D0 is a board pin label; the firmware uses GPIO0.
 
-Ein Magnet bewegt sich mit der Klappe. In Mittelstellung sollen beide Kontakte inaktiv sein. Bei Bewegung nach innen soll zuerst der Innenkontakt, nach außen zuerst der Außenkontakt schalten. Vorhandene Verschlussmagnete können die Kontakte beeinflussen; die Positionen müssen am echten Aufbau geprüft werden.
+A magnet moves with the flap. Both contacts should be inactive in its resting position. The inside contact should activate first when the flap swings inward; the outside contact should activate first when it swings outward. Existing closure magnets can interfere, so test contact placement on the physical flap.
 
-## Auswertung und Grenzen
+## Detection and limitations
 
-Der erste Kontakt bestimmt die Richtung. Werden beide innerhalb von 100 ms erkannt, lautet das Ergebnis `unklar`. Ein Ereignis wird erst nach fünf Sekunden mit beiden Kontakten inaktiv erneut zugelassen. Auch nach Neustart und Umschalten des Testmodus wird diese Ruhezeit abgewartet.
+The first contact determines direction. If both are detected within 100 ms, the result is `unclear`. Another event is allowed only after both contacts have been inactive for five seconds. This quiet period also applies after boot and test mode changes.
 
-Rückschwingen wird dadurch meist unterdrückt. Zwei schnelle tatsächliche Öffnungen können zusammengefasst werden; spätes Nachschwingen kann erneut gezählt werden. Die Zähler beginnen nach jedem ESP-Neustart bei null. Während eines Verbindungsausfalls verlorene Ereignisse werden nicht nachgeliefert.
+This usually suppresses return swings. Two rapid real openings may be combined; a late return swing may count again. Counters start at zero after every ESP restart. Events lost during a connection outage are not replayed.
 
-Die zwei Richtungskontakte liefern keinen zuverlässigen dauerhaft offenen/geschlossenen Zustand. Es gibt keinen Verriegelungsantrieb und keine Zutrittskontrolle. Die Chip-Auswertung liefert nur das letzte Leseergebnis und ist noch nicht mit einer Öffnung verknüpft.
+Two direction contacts do not provide a reliable persistent open/closed state. No locking actuator or access control is implemented. Chip matching reports the last reader result and is not yet associated with an opening.
 
-## Akku und RFID später
+## Future battery and RFID work
 
-Ein passender geschützter einzelliger Lithiumakku mit 3,7 V Nennspannung und 4,2 V Ladeschlussspannung kann beim originalen XIAO ESP32-C6 über die integrierte Ladeschaltung geladen werden. Polung und Anschluss nach Board-Dokumentation prüfen. Die Firmware enthält aktuell **keinen angeschlossenen ADC-Messpfad und keinen Tiefentladeschutz**. Eine echte Akkuwarnung benötigt die noch zu ergänzende Messschaltung. Dauerhaftes WLAN ist kein sparsamer Langzeitbetrieb.
+The original XIAO ESP32-C6 has a charging circuit for a suitable protected single-cell lithium battery rated at 3.7 V with a 4.2 V charge limit. Follow the board documentation for connections and polarity. The firmware currently has **no connected ADC measurement path and no software discharge protection**. Real low-battery notifications require the measurement circuit and adapter still to be added. Continuous Wi-Fi is not a low-power long-term operating mode.
 
-Für implantierte Tierchips ist ein zum tatsächlichen Chip passender Leser erforderlich. FDX-B mit 134,2 kHz ist die bisherige Planungsannahme. Eine passive Antennenspule allein an GPIOs ersetzt kein Lesemodul. Leser, Antennenabstimmung, Pegel und Protokoll sind noch festzulegen; es ist kein erfundener UART-Treiber enthalten.
+An implanted animal microchip requires a reader compatible with the actual chip. FDX-B at 134.2 kHz is the current planning assumption. A passive antenna coil connected to GPIO pins does not replace a reader. Reader choice, antenna tuning, voltage levels and protocol remain to be determined; no speculative UART decoder is included.
 
-## Dokumentation
+## References
 
 - [Seeed XIAO ESP32-C6](https://wiki.seeedstudio.com/xiao_esp32c6_getting_started/)
-- [ESPHome GPIO-Sensoren](https://esphome.io/components/binary_sensor/gpio/)
+- [ESPHome GPIO sensors](https://esphome.io/components/binary_sensor/gpio/)
 - [ESPHome OTA](https://esphome.io/components/ota/esphome/)
-- [Home Assistant: bedingte Karten](https://www.home-assistant.io/dashboards/conditional/)
+- [Home Assistant conditional cards](https://www.home-assistant.io/dashboards/conditional/)
 
-Fehler und Erfahrungen mit der mechanischen Montage können über GitHub Issues gemeldet werden.
+Report bugs and physical installation experience through GitHub Issues.

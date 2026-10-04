@@ -1,14 +1,22 @@
 # Changelog
 
+## v0.1.0-beta.2 — 2026-10-04
+
+- English documentation, filenames, code identifiers, entity labels, dashboard and phone messages.
+- English event types: `inside`, `outside`, `unclear`, `low`, `recovered`.
+- Additional German setup guide in `README.de.md`.
+- Documented migration from beta.1; existing German installations are not updated automatically.
+- Detection timing, counters, chip normalization and battery thresholds are unchanged.
+
 ## v0.1.0-beta.1 — 2026-10-04
 
-Erste öffentliche Vorabversion für Seeed Studio XIAO ESP32-C6, ESPHome und Home Assistant.
+First public prerelease for Seeed Studio XIAO ESP32-C6, ESPHome and Home Assistant.
 
-- Richtungserkennung mit zwei Reedkontakten, Entprellung und Ruhezeit.
-- Getrennte echte und simulierte Öffnungsereignisse.
-- Aufgeräumtes HA-Dashboard mit Testbereich nur bei eingeschaltetem Testmodus.
-- Software-Schnittstellen und Simulationen für Tierchip-Zuordnung und Akkuwarnungen.
-- HA-Automationen für Handy-Benachrichtigungen.
-- Lokale Zugangsdaten über secrets.yaml; API- und OTA-Verschlüsselung im Beispiel.
+- Opening direction detection using two reed contacts, debounce and quiet period.
+- Separate real and simulated opening events.
+- Clean HA dashboard showing test controls only while test mode is enabled.
+- Software adapters and simulations for animal chip matching and battery warnings.
+- Phone notification automation examples.
+- Local credentials through secrets.yaml; encrypted API and OTA in the example.
 
-RFID-Hardware, reale Akkumessung, Deep Sleep und mechanischer Einbau sind noch nicht fertig.
+RFID hardware, physical battery measurements, deep sleep and mechanical installation remain unfinished.
