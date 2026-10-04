@@ -22,6 +22,10 @@ The original firmware was built and tested with **ESPHome 2026.9.1** on a real X
 | Battery operation with deep sleep | Not implemented; development uses USB power |
 | Antenna, reader driver and 3D printed parts | Planned; not included |
 
+## Hardware and shopping links
+
+See the [minimal parts list](PARTS.md) for the board, contacts and a battery candidate. Amazon links there are clearly marked affiliate links. Physical mounting and battery operation still need verification.
+
 ## Dashboard language
 
 The optional automatic dashboard follows the Home Assistant profile language: German profiles get German labels and results; other languages use English. See [LOCALIZATION.md](LOCALIZATION.md) for installation. Existing German firmware is supported without reflashing. Entity names in device settings and detail dialogs remain as registered.

@@ -22,6 +22,10 @@ Die ursprüngliche deutsche Firmware wurde mit ESPHome **2026.9.1** auf einem ec
 | Akkubetrieb mit Deep Sleep | Noch nicht implementiert; Entwicklung per USB |
 | Antenne, Leser-Treiber und 3D-Druck | Geplant; noch nicht enthalten |
 
+## Bauteile und Einkaufslinks
+
+Die [minimale Teileliste](PARTS.de.md) enthält Board, Kontakte und einen Akku-Kandidaten. Amazon-Links sind dort als Affiliate-Links gekennzeichnet. Montage und Akkubetrieb müssen noch praktisch geprüft werden.
+
 ## Sprache im Dashboard
 
 Das optionale automatische Dashboard folgt der Home-Assistant-Profilsprache: Deutsch zeigt deutsche Beschriftungen und Ergebnisse; andere Sprachen verwenden Englisch. Die Einrichtung steht in [LOCALIZATION.md](LOCALIZATION.md). Für die bestehende deutsche Firmware sind `entity_prefix: katzenklappe` und `legacy: true` vorgesehen; erneutes Flashen ist dafür nicht nötig. Namen in der Geräteverwaltung und in Detaildialogen bleiben wie registriert.
