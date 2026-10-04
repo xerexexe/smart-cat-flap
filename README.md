@@ -66,11 +66,14 @@ Phone notifications have a separate `notification_language: en` or `de` variable
 
 The English example uses the device name `smart-cat-flap`, friendly name `Smart Cat Flap` and entity prefix `smart_cat_flap_`. Custom names or existing entities with conflicting names require corresponding dashboard and automation changes. The device settings page still lists every entity; conditional visibility applies to the dashboard.
 
-## Migrating from beta.1
+<details>
+<summary>Migrating from beta.1</summary>
 
 Beta.2 uses English filenames, entity labels, internal identifiers, status messages and event types. Opening events are now `inside`, `outside`, `unclear`; battery events are `low`, `recovered`. Update the dashboard and both automations together with the firmware. Existing HA entity registry entries may retain earlier IDs after a firmware update: verify the actual IDs instead of assuming they were renamed automatically.
 
 The running device is not updated by publishing this repository. For a German installation, the automatic dashboard supports `entity_prefix: katzenklappe` with `legacy: true`; keep the existing German automations or adapt the examples to its event types. See LOCALIZATION.md.
+
+</details>
 
 ## Wiring the reed contacts
 

@@ -68,9 +68,12 @@ Code und Dateinamen sind auf Englisch. Das Dashboard unterstützt Deutsch und En
 
 Das Dashboard erwartet Entitäten mit dem Präfix `smart_cat_flap_`. Bei einem anderen Gerätenamen oder bereits vorhandenen gleichnamigen Entitäten müssen die IDs angepasst werden. Die allgemeine Geräteverwaltung listet weiterhin alle Entitäten; die bedingte Anzeige gilt für das Dashboard.
 
-## Migration von beta.1
+<details>
+<summary>Migration von beta.1</summary>
 
 Die englischen Beispiele verwenden den Gerätenamen `smart-cat-flap`, den Anzeigenamen `Smart Cat Flap` und das Entitätspräfix `smart_cat_flap_`. Die Öffnungsereignisse heißen `inside`, `outside`, `unclear`; Akkuereignisse `low` und `recovered`. Firmware, Dashboard und beide Automationen gemeinsam umstellen. Bereits registrierte Home-Assistant-Entitäten können ihre alten IDs behalten; die tatsächlichen IDs prüfen und bei Bedarf anpassen. Die laufende deutsche Installation wurde durch die Veröffentlichung nicht verändert. Die ursprüngliche Version ist weiterhin als beta.1 verfügbar.
+
+</details>
 
 ## Anschluss der Reedkontakte
 
