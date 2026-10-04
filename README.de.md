@@ -8,6 +8,18 @@ Eine vorhandene Katzenklappe im Fliegengitter mit einem **Seeed Studio XIAO ESP3
 
 Die ursprüngliche deutsche Firmware wurde mit ESPHome **2026.9.1** auf einem echten XIAO ESP32-C6 getestet. Die englische Übersetzung behält die Erkennungslogik bei, wurde aber nicht auf die bestehende Installation geflasht. Mechanische Tests an der eingebauten Klappe stehen noch aus. Die Schwenkrichtung ist kein Nachweis, dass eine Katze vollständig hinein- oder hinausgelaufen ist.
 
+## 🛒 Teile zum Nachbauen
+
+**Werbung / Affiliate-Links:** Als Amazon-Partner verdiene ich an qualifizierten Verkäufen.
+
+| Bauteil | Wofür es gebraucht wird | Einkaufslink |
+|---|---|---|
+| **XIAO ESP32-C6** · 1 Board | ESPHome und Verbindung zu Home Assistant | **[Auf Amazon ansehen — Affiliate-Link](https://www.amazon.de/dp/B0D2NKVB34?th=1&linkCode=ll2&tag=xerexexe-21&linkId=bba6cd061ce635df290c3ba6b551c2d3&ref_=as_li_ss_tl)** |
+| **Reedkontakte + Magnete** · 1 Packung, 2 Sets | Erkennen die Öffnungsrichtung der Klappe | **[Auf Amazon ansehen — Affiliate-Link](https://www.amazon.de/dp/B0C9KQRSV2?th=1&linkCode=ll2&tag=xerexexe-21&linkId=62cf6252d4e119858257c1d33c1658ba&ref_=as_li_ss_tl)** |
+| **Geschützter 3,7-V-LiPo** · 2000-mAh-Kandidat | Stromversorgung ohne USB-Kabel | **[Auf Amazon ansehen — Affiliate-Link](https://www.amazon.de/EEMB-2000mAh-Lithium-Polymer-JST2-0-Stecker/dp/B0B7N2T1TD?__mk_de_DE=%C3%85M%C3%85%C5%BD%C3%95%C3%91&dib=eyJ2IjoiMSJ9.s48hNAQtAlYEKRBmSWyoHtwE2_HX-mXzuSPtnJsvPippCB_4mRP4Uyc1vY7ZU9PSvfrPhaORm0hjLViwGwS2ufVargGViwdkArg4i8D1LB8QkYHK1viXctzPGViMrFRFI1PNSI2k-f5di9N5rGRO11lpZtK2IcSIsIVYaKkUH19tAakU66jILQIM2tHZScXxKtdDD0BplKYqhgv98qJXbeFqcl4bQwnax6T_pYm5SvPLdPfA8yFmrDpSLl_qL7j-E2-dl9rXU0rWOO8ykp1YSYLI_Nr6mkGEcIiQBknlR4s.9_X7atOe-wkeNcazDFP21F6t3qluQRc8cv_RL0rVy04&dib_tag=se&keywords=LiPo%2B3.7V%2B2000mAh%2BSchutzschaltung&qid=1791102150&s=ce-de&sr=1-7&th=1&linkCode=ll2&tag=xerexexe-21&linkId=d8fc50939a33134f84f84cfd6710724c&ref_=as_li_ss_tl)** |
+
+**Schon vorhanden? Weiterverwenden.** Für Softwaretests genügt USB-Strom. Die Montage der verlinkten Kontakte und der Akkuaufbau sind noch nicht getestet; der Akku muss mit den Lötpads des XIAO verbunden werden. Vor dem Bestellen die **[vollständige Teileliste mit Anschlussinfos](PARTS.de.md)** lesen. Akkulaufzeit und Stromsparbetrieb werden noch entwickelt.
+
 ## Funktionen und Stand
 
 | Funktion | Beta-Stand |
@@ -21,10 +33,6 @@ Die ursprüngliche deutsche Firmware wurde mit ESPHome **2026.9.1** auf einem ec
 | Akkuwarnung | Software und Simulation vorhanden; echte Spannungsmessung fehlt |
 | Akkubetrieb mit Deep Sleep | Noch nicht implementiert; Entwicklung per USB |
 | Antenne, Leser-Treiber und 3D-Druck | Geplant; noch nicht enthalten |
-
-## Bauteile und Einkaufslinks
-
-Die [minimale Teileliste](PARTS.de.md) enthält Board, Kontakte und einen Akku-Kandidaten. Amazon-Links sind dort als Affiliate-Links gekennzeichnet. Montage und Akkubetrieb müssen noch praktisch geprüft werden.
 
 ## Sprache im Dashboard
 
