@@ -4,7 +4,23 @@
 
 **Beta · v0.1.0-beta.3**
 
-Eine vorhandene Katzenklappe im Fliegengitter mit einem **Seeed Studio XIAO ESP32-C6**, ESPHome und Home Assistant erweitern. Zwei Reedkontakte erfassen die Schwenkrichtung. Home Assistant meldet Öffnungen auf dem Handy. Ein Testmodus ermöglicht Softwaretests, bevor Sensoren, Akku und Tierchip-Leser vorhanden sind.
+Eine vorhandene Katzenklappe im Fliegengitter mit einem **Seeed Studio XIAO ESP32-C6**, ESPHome und Home Assistant erweitern. Zwei Reedkontakte erfassen die Schwenkrichtung. Home Assistant meldet Öffnungen auf dem Handy. Ein Testmodus ermöglicht Tests der Erkennung, Meldungen und späteren Erweiterungen.
+
+**Aktueller Aufbau · 05.10.2026:** Akku und Reedkontakte sind angeschlossen. Der ESP verbindet sich im Akkubetrieb mit Home Assistant; eine echte Öffnungsmeldung wurde auf dem Handy empfangen. Die Montage im Rahmen und die Akkulaufzeit sind noch zu prüfen. Die Messschaltung für Akkuspannung, USB-Erkennung und Lade-/Entladestrom ist entwickelt, ihre Firmware erfolgreich kompiliert; die Zusatzteile fehlen noch. [Anschluss und Zusatzteile](POWER-MONITORING.de.md). Dieser Stand liegt im `main`-Branch; der letzte veröffentlichte Release-Tag bleibt `v0.1.0-beta.3`.
+
+<details>
+<summary>Kleiner Projektverlauf – was wir bisher gemacht haben</summary>
+
+- ESP eingerichtet und mit Home Assistant verbunden.
+- Öffnungsrichtung und Handy-Meldungen programmiert und getestet.
+- Testfelder im Dashboard hinter dem Testmodus versteckt; Deutsch und Englisch ergänzt.
+- Reedkontakte und Akku angeschlossen; Akkubetrieb und eine echte Öffnungsmeldung bestätigt.
+- Schnelle Folgemeldungen verbessert: kürzere Ruhezeit, einzelne Benachrichtigungen mit Ereigniszeit.
+- Festgestellt, dass der Akkuanschluss allein keine Ladeerkennung oder Akkumesswerte an die Software liefert.
+- Messschaltung mit INA219 und USB-Erkennung entwickelt; Firmware kompiliert und Verdrahtung dokumentiert.
+- Als Nächstes: Messteile einbauen, echte Akkuanzeigen prüfen und den Aufbau am Rahmen montieren. Tierchip-Leser bleibt zurückgestellt.
+
+</details>
 
 Die ursprüngliche deutsche Firmware wurde mit ESPHome **2026.9.1** auf einem echten XIAO ESP32-C6 getestet. Die englische Übersetzung behält die Erkennungslogik bei, wurde aber nicht auf die bestehende Installation geflasht. Mechanische Tests an der eingebauten Klappe stehen noch aus. Die Schwenkrichtung ist kein Nachweis, dass eine Katze vollständig hinein- oder hinausgelaufen ist.
 
@@ -21,7 +37,7 @@ Verwendet wird die **NAMSAN Fliegengitter-Katzenklappe, Größe S, Schwarz** (Au
 | **Reedkontakte + Magnete** · 1 Packung, 2 Sets | Erkennen die Öffnungsrichtung der Klappe | **[Auf Amazon ansehen — Affiliate-Link](https://www.amazon.de/dp/B0C9KQRSV2?th=1&linkCode=ll2&tag=xerexexe-21&linkId=62cf6252d4e119858257c1d33c1658ba&ref_=as_li_ss_tl)** |
 | **Geschützter 3,7-V-LiPo** · 2000-mAh-Kandidat | Stromversorgung ohne USB-Kabel | **[Auf Amazon ansehen — Affiliate-Link](https://www.amazon.de/EEMB-2000mAh-Lithium-Polymer-JST2-0-Stecker/dp/B0B7N2T1TD?__mk_de_DE=%C3%85M%C3%85%C5%BD%C3%95%C3%91&dib=eyJ2IjoiMSJ9.s48hNAQtAlYEKRBmSWyoHtwE2_HX-mXzuSPtnJsvPippCB_4mRP4Uyc1vY7ZU9PSvfrPhaORm0hjLViwGwS2ufVargGViwdkArg4i8D1LB8QkYHK1viXctzPGViMrFRFI1PNSI2k-f5di9N5rGRO11lpZtK2IcSIsIVYaKkUH19tAakU66jILQIM2tHZScXxKtdDD0BplKYqhgv98qJXbeFqcl4bQwnax6T_pYm5SvPLdPfA8yFmrDpSLl_qL7j-E2-dl9rXU0rWOO8ykp1YSYLI_Nr6mkGEcIiQBknlR4s.9_X7atOe-wkeNcazDFP21F6t3qluQRc8cv_RL0rVy04&dib_tag=se&keywords=LiPo%2B3.7V%2B2000mAh%2BSchutzschaltung&qid=1791102150&s=ce-de&sr=1-7&th=1&linkCode=ll2&tag=xerexexe-21&linkId=d8fc50939a33134f84f84cfd6710724c&ref_=as_li_ss_tl)** |
 
-**Schon vorhanden? Weiterverwenden.** Für Softwaretests genügt USB-Strom. Die Montage der verlinkten Kontakte und der Akkuaufbau sind noch nicht getestet; der Akku muss mit den Lötpads des XIAO verbunden werden. Vor dem Bestellen die **[vollständige Teileliste mit Anschlussinfos](PARTS.de.md)** lesen. Akkulaufzeit und Stromsparbetrieb werden noch entwickelt.
+**Schon vorhanden? Weiterverwenden.** Für Softwaretests genügt USB-Strom. Akku und Kontakte sind am Prototyp angeschlossen und getestet; die Montage an der Klappe steht noch aus. Für die echten Akkuanzeigen werden zusätzlich ein INA219-Modul sowie 68-kΩ- und 100-kΩ-Widerstände benötigt. Vor dem Bestellen die **[vollständige Teileliste mit Anschlussinfos](PARTS.de.md)** lesen. Akkulaufzeit und Stromsparbetrieb werden noch entwickelt.
 
 ## Funktionen und Stand
 
@@ -29,12 +45,13 @@ Verwendet wird die **NAMSAN Fliegengitter-Katzenklappe, Größe S, Schwarz** (Au
 |---|---|
 | Zwei Kontakte an GPIO0/GPIO1 | Implementiert; mechanische Montage noch zu testen |
 | Öffnungsrichtung innen, außen oder unklar | Implementiert; 50 ms Entprellung und 0,5 s Ruhezeit |
-| Handy-Benachrichtigungen | HA-Automationen; Zielgerät lokal eintragen |
+| Handy-Benachrichtigungen | Echte und simulierte Meldungen am S23 Ultra empfangen; Zielgerät beim Nachbau lokal eintragen |
 | Aufgeräumtes Dashboard | Testfelder erscheinen nur bei eingeschaltetem Testmodus |
 | Virtuelle Kontakte | Implementiert; echte Eingänge werden im Testmodus ignoriert |
 | Chipnummer-Abgleich | Software und Simulation vorhanden; echter RFID-Leser fehlt |
-| Akkuwarnung | Software und Simulation vorhanden; echte Spannungsmessung fehlt |
-| Akkubetrieb mit Deep Sleep | Noch nicht implementiert; Entwicklung per USB |
+| Akkuwarnung und Messwerte | INA219-/USB-Erweiterung kompiliert; Messhardware noch einzubauen |
+| Akkubetrieb | Am Prototyp bestätigt; Laufzeit noch nicht gemessen |
+| Deep Sleep | Noch nicht implementiert |
 | Antenne, Leser-Treiber und 3D-Druck | Geplant; noch nicht enthalten |
 
 ## Sprache im Dashboard
@@ -94,15 +111,15 @@ Ein Magnet bewegt sich mit der Klappe. In Mittelstellung sollen beide Kontakte i
 
 ## Auswertung und Grenzen
 
-Der erste Kontakt bestimmt die Richtung. Werden beide innerhalb von 100 ms erkannt, lautet das Ergebnis `unclear`. Ein Ereignis wird erst nach fünf Sekunden mit beiden Kontakten inaktiv erneut zugelassen. Auch nach Neustart und Umschalten des Testmodus wird diese Ruhezeit abgewartet.
+Der erste Kontakt bestimmt die Richtung. Werden beide innerhalb von 100 ms erkannt, lautet das Ergebnis `unclear`. Ein Ereignis wird erst nach 500 ms mit beiden Kontakten inaktiv erneut zugelassen. Auch nach Neustart und Umschalten des Testmodus wird diese Ruhezeit abgewartet.
 
 Rückschwingen wird dadurch meist unterdrückt. Zwei schnelle tatsächliche Öffnungen können zusammengefasst werden; spätes Nachschwingen kann erneut gezählt werden. Die Zähler beginnen nach jedem ESP-Neustart bei null. Während eines Verbindungsausfalls verlorene Ereignisse werden nicht nachgeliefert.
 
 Die zwei Richtungskontakte liefern keinen zuverlässigen dauerhaft offenen/geschlossenen Zustand. Es gibt keinen Verriegelungsantrieb und keine Zutrittskontrolle. Die Chip-Auswertung liefert nur das letzte Leseergebnis und ist noch nicht mit einer Öffnung verknüpft.
 
-## Akku und RFID später
+## Akkuanzeige und spätere RFID-Erweiterung
 
-Ein passender geschützter einzelliger Lithiumakku mit 3,7 V Nennspannung und 4,2 V Ladeschlussspannung kann beim originalen XIAO ESP32-C6 über die integrierte Ladeschaltung geladen werden. Polung und Anschluss nach Board-Dokumentation prüfen. Die Firmware enthält aktuell **keinen angeschlossenen ADC-Messpfad und keinen Tiefentladeschutz**. Eine echte Akkuwarnung benötigt die noch zu ergänzende Messschaltung. Dauerhaftes WLAN ist kein sparsamer Langzeitbetrieb.
+Der geschützte 3,7-V-/2000-mAh-Akku ist am Prototyp angeschlossen; die Verbindung zu Home Assistant funktioniert auch ohne USB. Laden erfolgt über die integrierte Ladeschaltung des XIAO. Der Akkuanschluss allein liefert der Software jedoch keine Messwerte. Die optionale [INA219-/USB-Messschaltung](POWER-MONITORING.de.md) ergänzt Akkuspannung, Lade-/Entladestrom, Stromquelle und eine grobe Restzeitschätzung. Ihr Einbau und die Prüfung der Messwerte stehen noch aus. Die vorhandenen BAT-Lötstellen müssen dafür nicht erneut erhitzt werden. Die Firmware enthält keinen Tiefentladeschutz; Dauer-WLAN und Akkulaufzeit sind noch nicht optimiert.
 
 Für implantierte Tierchips ist ein zum tatsächlichen Chip passender Leser erforderlich. FDX-B mit 134,2 kHz ist die bisherige Planungsannahme. Eine passive Antennenspule allein an GPIOs ersetzt kein Lesemodul. Leser, Antennenabstimmung, Pegel und Protokoll sind noch festzulegen; es ist kein erfundener UART-Treiber enthalten.
 
