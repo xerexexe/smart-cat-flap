@@ -64,6 +64,7 @@ Handy-Meldungen haben in jeder Automation eine eigene Variable `notification_lan
 
 Der aktuelle main-Branch zeigt einzelne Öffnungsmeldungen mit Ereigniszeit und bereitet die Akkuanzeige vor. Ladestatus, Stromquelle und Restlaufzeit bleiben ohne echte Messsignale unbekannt. Die vollständige Zusatzteileliste und Verdrahtung stehen in [POWER-MONITORING.de.md](POWER-MONITORING.de.md); der veröffentlichte Tag beta.3 enthält diese späteren Änderungen noch nicht.
 
+- `usb-detection.yaml`: USB-/Akkubetrieb separat erkennen, auch ohne INA219.
 - `power-monitoring.yaml`: optionale INA219-/USB-Messung; zuerst die Hardware einbauen. [Verdrahtung und Kalibrierung](POWER-MONITORING.de.md).
 - `cat-flap.yaml`: vollständiges ESPHome-Beispiel. Nur diese Datei als Geräte-Konfiguration verwenden.
 - `secrets.example.yaml`: Vorlage für lokale Zugangsdaten.

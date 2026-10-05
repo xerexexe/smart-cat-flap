@@ -22,6 +22,21 @@ Software check on 2026-10-05: English example plus package successfully compiled
 with ESPHome 2026.9.1 for ESP32-C6; the legacy German ID overrides passed ESPHome
 configuration validation. These checks do not validate electrical measurements.
 
+### USB detection before the INA219 arrives
+
+Enable `usb-detection.yaml` separately:
+
+```yaml
+packages:
+  usb_detection: !include usb-detection.yaml
+```
+
+Wire **5V → 8.2 kΩ → shared D3 junction → 12 kΩ → GND**. The original
+68 kΩ / 100 kΩ pair also works with the same firmware. The prototype measured
+3.09 V at D3 with USB and 0 V without USB. This detects the supply, not charging current.
+When upgrading, copy both package files and include only `power-monitoring.yaml`;
+it already includes USB detection.
+
 ### Additional parts
 
 | Quantity | Part | Purpose |
@@ -68,7 +83,7 @@ their reed contacts; D6/D7 remain available for a future UART reader.
 
 ### Enable after assembly
 
-Copy the package beside the device YAML and add to the English example:
+Copy both `power-monitoring.yaml` and `usb-detection.yaml` beside the device YAML and add to the English example:
 
 ```yaml
 packages:

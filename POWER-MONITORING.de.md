@@ -10,6 +10,22 @@ Softwareprüfung am 05.10.2026: Englisches Beispiel mit Erweiterung erfolgreich
 für ESP32-C6 unter ESPHome 2026.9.1 kompiliert; deutsche ID-Zuordnung mit ESPHome
 validiert. Elektrische Messwerte sind damit noch nicht praktisch geprüft.
 
+## USB-Erkennung schon ohne INA219
+
+Die USB-Erkennung kann separat mit `usb-detection.yaml` aktiviert werden:
+
+```yaml
+packages:
+  usb_detection: !include usb-detection.yaml
+```
+
+Verdrahtung: **5V → 8,2 kΩ → gemeinsamer Punkt an D3 → 12 kΩ → GND**.
+Die ursprünglichen 68 kΩ / 100 kΩ funktionieren ebenfalls. Beide Varianten
+benötigen keinen anderen Programmcode. Am Prototyp wurden am D3-Punkt 3,09 V
+mit USB und 0 V ohne USB gemessen. Das erkennt die Versorgung, noch keinen Ladestrom.
+Beim späteren Wechsel zur kompletten Messung beide Paketdateien kopieren und
+nur `power-monitoring.yaml` einbinden; dieses enthält die USB-Erkennung bereits.
+
 ## Genau diese Zusatzteile
 
 | Menge | Teil | Zweck |
@@ -61,7 +77,7 @@ späteren seriellen RFID-Leser frei.
 
 ## Firmware aktivieren – erst nach Einbau
 
-`power-monitoring.yaml` neben die Geräte-YAML kopieren. Beim englischen Beispiel:
+`power-monitoring.yaml` und `usb-detection.yaml` neben die Geräte-YAML kopieren. Beim englischen Beispiel:
 
 ```yaml
 packages:

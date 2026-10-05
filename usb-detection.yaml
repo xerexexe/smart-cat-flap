@@ -1,0 +1,20 @@
+# Optional USB detection only; does not require an INA219.
+# 5V -> 8.2k -> D3 junction -> 12k -> GND (or 68k / 100k).
+binary_sensor:
+  - platform: gpio
+    id: pm_usb_present
+    internal: true
+    pin:
+      number: GPIO21
+      mode: INPUT
+    filters:
+      - delayed_on_off: 200ms
+
+text_sensor:
+  - platform: template
+    id: pm_power_source
+    name: Power source
+    update_interval: 1s
+    lambda: |-
+      if (!id(pm_usb_present).has_state()) return {"unknown"};
+      return {id(pm_usb_present).state ? "usb" : "battery"};

@@ -5,6 +5,9 @@ substitutions:
   pm_voltage_id: real_battery_voltage
   pm_warning_id: real_battery_warning
 
+packages:
+  usb_detection: !include usb-detection.yaml
+
 i2c:
   id: pm_i2c
   sda: GPIO22 # XIAO D4
@@ -32,24 +35,7 @@ globals:
     type: uint32_t
     initial_value: '0'
 
-binary_sensor:
-  - platform: gpio
-    id: pm_usb_present
-    internal: true
-    pin:
-      number: GPIO21 # D3; never connect USB 5 V directly to this pin.
-      mode: INPUT
-    filters:
-      - delayed_on_off: 200ms
-
 text_sensor:
-  - platform: template
-    id: pm_power_source
-    name: Power source
-    update_interval: 1s
-    lambda: |-
-      if (!id(pm_usb_present).has_state()) return {"unknown"};
-      return {id(pm_usb_present).state ? "usb" : "battery"};
   - platform: template
     id: pm_charging_status
     name: Charging status

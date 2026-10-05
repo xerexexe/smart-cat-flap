@@ -2,6 +2,8 @@
 
 ## Unreleased — 2026-10-05
 
+- Standalone USB/battery source detection on D3; works without the INA219. Documented the tested 8.2 kΩ / 12 kΩ divider alternative.
+
 - Opening pushes keep separate notifications and include the event time.
 - High Android delivery priority with a one-day TTL for offline phones.
 - Re-arm after 500 ms with both contacts inactive, replacing the five-second quiet period.

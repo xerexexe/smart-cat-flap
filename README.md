@@ -64,6 +64,7 @@ The current main branch keeps separate opening notifications with their event ti
 
 ## Files
 
+- `usb-detection.yaml`: standalone USB/battery source detection; works before installing the INA219.
 - `power-monitoring.yaml`: optional INA219/USB measurement package; install the hardware first. See [wiring and calibration](POWER-MONITORING.md).
 - `cat-flap.yaml`: complete ESPHome example. Use this as the device configuration.
 - `secrets.example.yaml`: template for local credentials.
