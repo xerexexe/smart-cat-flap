@@ -24,8 +24,15 @@ Das sind Einkaufsbeispiele, kein vollständig erprobter Aufbau. Die XIAO-Plattfo
 - Beim Akku 4,2-V-Ladeschlussspannung, Polung und zulässigen Ladestrom mit Akku- und [XIAO-Dokumentation](https://wiki.seeedstudio.com/xiao_esp32c6_getting_started/) abgleichen. Platz außen am Rahmen vorsehen; das Angebot nennt ungefähr 34,5 × 56 × 10,3 mm. Dauerhaftes WLAN und die aktuelle Firmware sind noch nicht für lange Akkulaufzeit optimiert. Die echte Akkuspannungsmessung ist noch nicht angeschlossen.
 - Kabel, Isolierung und gedruckte Halter gehören zum Aufbau. Ein Steckbrett, Jumper-Set oder allgemeines Bauteilsortiment ist für diese Liste nicht erforderlich. Gehäuse und Halter sind als 3D-Druck geplant; Druckdateien sind noch nicht enthalten.
 
+## Zusatzteile für die echte Akkuanzeige
+
+Benötigt werden **ein INA219-Modul mit R100-Shunt (0,1 Ω)**, **ein 68-kΩ-Widerstand mit 1 %** und **ein 100-kΩ-Widerstand mit 1 %**. Ein weiteres Lademodul oder Steckbrett wird nicht benötigt. Das Messmodul kommt in die rote Akkuleitung, ohne erneut an BAT zu löten. [Verdrahtung und Firmware](POWER-MONITORING.de.md). Der praktische Test steht noch aus.
+
+
+Ein dokumentierter Kandidat ist [Soldered 333066 bei Amazon](https://www.amazon.de/dp/B0FY6LGK9G) (normaler Produktlink), mit 0,1-Ω-Shunt und 38 × 22 mm Platinenmaß laut [Hersteller](https://docs.soldered.com/ina219/overview/). VIN+/VIN− können als IN+/IN− beschriftet sein. Zusätzlich Platz für Klemmen und Kabel vorsehen.
+
 ## Spätere Erweiterung
 
-RFID-Leser, Antenne, ADC-Messteile und Hardware zum Stromsparen sind zurückgestellt. Für Leser und Antenne gibt es noch keinen erprobten Aufbau zum Nachkaufen. Eine Antennenspule allein kann keinen implantierten Tierchip auslesen. Diese Erweiterungen erhalten eine eigene Teileliste, sobald Schnittstellen und elektrische Anforderungen feststehen.
+RFID-Leser, Antenne und Hardware zum Stromsparen sind zurückgestellt. Für Leser und Antenne gibt es noch keinen erprobten Aufbau zum Nachkaufen. Eine Antennenspule allein kann keinen implantierten Tierchip auslesen. Diese Erweiterungen erhalten eine eigene Teileliste, sobald Schnittstellen und elektrische Anforderungen feststehen.
 
 Die Angebotsangaben wurden am 04.10.2026 angesehen. Preise, Verkäufer, Lieferbarkeit und Varianten können sich ändern; vor dem Bestellen die gewählte Variante prüfen. Hier werden keine Preise oder Produktbilder übernommen.

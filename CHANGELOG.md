@@ -6,7 +6,8 @@
 - High Android delivery priority with a one-day TTL for offline phones.
 - Re-arm after 500 ms with both contacts inactive, replacing the five-second quiet period.
 - Automatic dashboard prepares battery voltage, source, charging, runtime and warning rows; absent measurements remain Unknown.
-- Hardware power measurements and runtime estimation are still pending.
+- Optional INA219 power-monitoring package and complete English/German wiring plan; physical installation and measurement tests remain pending.
+- Fix the complete example's OTA configuration: encrypted OTA cannot also set an OTA password.
 
 ## v0.1.0-beta.3 — 2026-10-04
 

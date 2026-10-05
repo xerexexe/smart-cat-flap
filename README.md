@@ -47,6 +47,7 @@ The current main branch keeps separate opening notifications with their event ti
 
 ## Files
 
+- `power-monitoring.yaml`: optional INA219/USB measurement package; install the hardware first. See [wiring and calibration](POWER-MONITORING.md).
 - `cat-flap.yaml`: complete ESPHome example. Use this as the device configuration.
 - `secrets.example.yaml`: template for local credentials.
 - `dashboard-auto.yaml`, `frontend/smart-cat-flap-card.js`: dashboard following your HA profile language.

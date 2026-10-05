@@ -24,8 +24,15 @@ These are shopping examples, not a fully validated assembly. The XIAO platform h
 - For the battery, confirm a 4.2 V charge limit, polarity and allowed charging current against the battery and [XIAO documentation](https://wiki.seeedstudio.com/xiao_esp32c6_getting_started/). Allow space outside the frame; the listing gives approximately 34.5 × 56 × 10.3 mm. Continuous Wi-Fi and the current firmware are not optimized for long battery life. Real battery-voltage measurement is not connected yet.
 - Wire, insulation and printed mounts are assembly materials. No breadboard, jumper kit or general component assortment is required by this list. The electronics enclosure and holders are planned for 3D printing; printable models are not included yet.
 
+## Additional parts for real power monitoring
+
+Add **one INA219 module with an R100 (0.1 Ω) shunt**, **one 68 kΩ 1% resistor** and **one 100 kΩ 1% resistor**. No additional charger or breadboard is needed. The module goes into the positive battery lead, preserving existing BAT solder joints. See [the complete wiring and firmware instructions](POWER-MONITORING.md). Physical tests remain pending.
+
+
+A documented module candidate is [Soldered 333066 on Amazon](https://www.amazon.de/dp/B0FY6LGK9G) (ordinary product link), with a 0.1 Ω shunt and a board footprint of 38 × 22 mm according to [the manufacturer](https://docs.soldered.com/ina219/overview/). VIN+/VIN− may be labelled IN+/IN−. Allow extra room for terminals and wires.
+
 ## Later expansion
 
-RFID reader, antenna, ADC measurement parts and power-saving hardware are deferred. There is no validated reader or antenna design to buy from this project yet. An antenna coil alone cannot read an implanted animal chip. These additions will get their own parts list after the interfaces and electrical requirements are established.
+RFID reader, antenna and power-saving hardware are deferred. There is no validated reader or antenna design to buy from this project yet. An antenna coil alone cannot read an implanted animal chip. These additions will get their own parts list after the interfaces and electrical requirements are established.
 
 The listing information was reviewed on 2026-10-04. Prices, sellers, availability and product variants may change; check the selected variant before ordering. No prices or product images are copied here.

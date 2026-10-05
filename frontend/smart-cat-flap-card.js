@@ -263,6 +263,7 @@ const STATES = {
   "usb": ["USB", "USB"],
   "charging": ["Charging", "Lädt"],
   "not_charging": ["Not charging", "Lädt nicht"],
+  "discharging": ["Discharging", "Wird entladen"],
   "full": ["Full", "Voll"],
   "on": ["Yes", "Ja"],
   "off": ["No", "Nein"],
