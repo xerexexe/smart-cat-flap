@@ -1,0 +1,171 @@
+# Optional INA3221 package. Physical module wiring must be verified before installation.
+# Safe to preload without the module: battery measurements remain unknown.
+# Reboot after connecting the module; ESPHome initializes I2C sensors at startup.
+# Include via packages; do not merge this sensor list manually.
+substitutions:
+  pm_battery_script: process_battery
+  pm_voltage_id: real_battery_voltage
+  pm_warning_id: real_battery_warning
+
+packages:
+  usb_detection: !include usb-detection.yaml
+
+i2c:
+  id: pm_i2c
+  sda: GPIO22 # XIAO D4
+  scl: GPIO23 # XIAO D5
+  scan: true
+  frequency: 100kHz
+
+globals:
+  - id: pm_sample_seen
+    type: bool
+    initial_value: 'false'
+  - id: pm_last_sample
+    type: uint32_t
+    initial_value: '0'
+  - id: pm_calibrated
+    type: bool
+    initial_value: 'false'
+  - id: pm_remaining_ah
+    type: float
+    initial_value: '0.0'
+  - id: pm_average_discharge
+    type: float
+    initial_value: '0.0'
+  - id: pm_discharge_samples
+    type: uint32_t
+    initial_value: '0'
+
+text_sensor:
+  - platform: template
+    id: pm_charging_status
+    name: Charging status
+    update_interval: never
+
+number:
+  - platform: template
+    id: pm_usable_capacity
+    name: Usable battery capacity
+    entity_category: config
+    unit_of_measurement: mAh
+    min_value: 100
+    max_value: 5000
+    step: 50
+    initial_value: 2000
+    restore_value: true
+    optimistic: true
+    mode: box
+    on_value:
+      - lambda: id(pm_calibrated) = false;
+
+sensor:
+  - platform: ina3221
+    id: pm_ina3221
+    i2c_id: pm_i2c
+    address: 0x40
+    update_interval: 5s
+    channel_1:
+      shunt_resistance: 0.1 ohm # R100 on the selected module; verify before connecting.
+      bus_voltage:
+        id: pm_bus_voltage
+        internal: true
+      shunt_voltage:
+        id: pm_shunt_voltage
+        internal: true
+      current:
+        id: pm_battery_current
+        name: Battery current
+        accuracy_decimals: 3
+        on_value:
+          - lambda: |-
+              // VIN+ is on the battery side: positive discharges, negative charges.
+              const float voltage = id(pm_bus_voltage).state + id(pm_shunt_voltage).state;
+              if (!std::isfinite(x) || std::fabs(x) > 1.0f ||
+                  !std::isfinite(voltage) || voltage < 2.5f || voltage > 4.3f) {
+                id(pm_invalidate).execute();
+                return;
+              }
+              const uint32_t now = millis();
+              const uint32_t elapsed = now - id(pm_last_sample);
+              if (id(pm_sample_seen) && elapsed > 20000) id(pm_calibrated) = false;
+              if (id(pm_calibrated) && id(pm_sample_seen) && elapsed <= 20000) {
+                // Approximate charge integration; brief Wi-Fi current peaks can be missed.
+                const float used_ah = x * (elapsed / 3600000.0f);
+                id(pm_remaining_ah) = std::max(0.0f, std::min(
+                  id(pm_usable_capacity).state / 1000.0f, id(pm_remaining_ah) - used_ah));
+              }
+              id(pm_last_sample) = now;
+              id(pm_sample_seen) = true;
+              id(${pm_battery_script}).execute(voltage, false);
+              if (!id(pm_usb_present).has_state()) {
+                id(pm_charging_status).publish_state("unknown");
+              } else if (x < -0.005f && id(pm_usb_present).state) {
+                id(pm_charging_status).publish_state("charging");
+              } else if (x > 0.005f) {
+                id(pm_charging_status).publish_state("discharging");
+              } else {
+                // Near-zero current is not proof of a full cell or an active charger.
+                id(pm_charging_status).publish_state(x < -0.005f ? "unknown" : "not_charging");
+              }
+              if (id(pm_usb_present).has_state() && !id(pm_usb_present).state && x > 0.005f) {
+                id(pm_average_discharge) = id(pm_discharge_samples) == 0 ? x :
+                  0.05f * x + 0.95f * id(pm_average_discharge);
+                if (id(pm_discharge_samples) < 100000) id(pm_discharge_samples)++;
+              } else {
+                id(pm_discharge_samples) = 0;
+                id(pm_average_discharge) = 0.0f;
+              }
+  - platform: template
+    id: pm_estimated_runtime
+    name: Estimated runtime
+    unit_of_measurement: h
+    accuracy_decimals: 1
+    update_interval: 5s
+    lambda: |-
+      if (!id(pm_calibrated) || !id(pm_sample_seen) ||
+          static_cast<uint32_t>(millis() - id(pm_last_sample)) > 20000 ||
+          !id(pm_usb_present).has_state() || id(pm_usb_present).state ||
+          id(pm_discharge_samples) < 12 || id(pm_average_discharge) <= 0.005f)
+        return NAN;
+      return id(pm_remaining_ah) / id(pm_average_discharge);
+
+button:
+  - platform: template
+    name: Confirm full battery
+    entity_category: config
+    on_press:
+      - lambda: |-
+          // User must first observe charge completion. Voltage alone is not enough.
+          if (!id(pm_sample_seen) || static_cast<uint32_t>(millis() - id(pm_last_sample)) > 20000 ||
+              !id(pm_usb_present).has_state() || !id(pm_usb_present).state ||
+              !std::isfinite(id(pm_battery_current).state) ||
+              std::fabs(id(pm_battery_current).state) > 0.010f ||
+              id(${pm_voltage_id}).state < 4.10f || !std::isfinite(id(${pm_voltage_id}).state)) {
+            ESP_LOGW("power_monitor", "Full-battery confirmation rejected: readings not suitable");
+            return;
+          }
+          id(pm_remaining_ah) = id(pm_usable_capacity).state / 1000.0f;
+          id(pm_calibrated) = true;
+          ESP_LOGI("power_monitor", "Runtime estimate calibrated from user-confirmed full battery");
+
+script:
+  - id: pm_invalidate
+    then:
+      - lambda: |-
+          id(pm_sample_seen) = false;
+          id(pm_calibrated) = false;
+          id(pm_discharge_samples) = 0;
+          id(${pm_voltage_id}).publish_state(NAN);
+          // Guard against re-entering this script through the current on_value callback.
+          if (std::isfinite(id(pm_battery_current).state)) id(pm_battery_current).publish_state(NAN);
+          id(${pm_warning_id}).invalidate_state();
+          id(pm_charging_status).publish_state("unknown");
+          id(pm_estimated_runtime).publish_state(NAN);
+
+interval:
+  - interval: 5s
+    then:
+      - lambda: |-
+          if (!id(pm_sample_seen) || static_cast<uint32_t>(millis() - id(pm_last_sample)) > 20000)
+            id(pm_invalidate).execute();

@@ -6,7 +6,9 @@
 
 Add opening detection and Home Assistant notifications to an existing cat flap in a fly screen using a **Seeed Studio XIAO ESP32-C6** and ESPHome. Two reed contacts detect which way the flap swings. Test mode exercises detection, notifications and future extensions.
 
-**Current prototype · 2026-10-05:** Battery and reed contacts are connected. The ESP connects to Home Assistant on battery power, and a real opening notification was received on the phone. Frame mounting and battery life still need testing. The battery/USB/current measurement circuit is designed and its firmware successfully compiled; the additional parts still need to be obtained. See [wiring and additional parts](POWER-MONITORING.md). This is the current `main` branch; the latest published release tag remains `v0.1.0-beta.3`.
+**Current prototype · 2026-10-05:** Battery and reed contacts are connected. The ESP connects to Home Assistant on battery power, and a real opening notification was received on the phone. Frame mounting and battery life still need testing. The battery/USB/current measurement circuit is designed and its firmware successfully compiled; the INA3221 module has been ordered; physical measurement tests remain pending. See [wiring and additional parts](POWER-MONITORING.md). This is the current `main` branch; the latest published release tag remains `v0.1.0-beta.3`.
+
+**Measurement update · 2026-10-05:** USB detection is installed and shows USB in Home Assistant. The ordered black INA3221 module now has its own firmware package; battery measurements remain unknown until the module is installed and verified. See [INA3221 setup and board checks](INA3221.md).
 
 <details>
 <summary>Short project diary – what we have done so far</summary>
@@ -19,6 +21,8 @@ Add opening detection and Home Assistant notifications to an existing cat flap i
 - Found that the battery connection alone provides no software charging detection or battery readings.
 - Designed an INA219 circuit with USB detection; compiled firmware and documented wiring.
 - Next: install measurement parts, check real battery readings and mount the prototype in the frame. Animal microchip reader remains deferred.
+
+- Installed USB detection and prepared INA3221 support for the ordered black module; physical terminal checks and real measurements are pending.
 
 </details>
 
@@ -37,7 +41,7 @@ The flap used for this project is the **NAMSAN screen-door cat flap, size S, bla
 | **Reed contacts + magnets** · 1 pack, 2 sets | Detect the flap's opening direction | **[View on Amazon — affiliate link](https://www.amazon.de/dp/B0C9KQRSV2?th=1&linkCode=ll2&tag=xerexexe-21&linkId=62cf6252d4e119858257c1d33c1658ba&ref_=as_li_ss_tl)** |
 | **Protected 3.7 V LiPo** · 2000 mAh candidate | Power the flap without a USB cable | **[View on Amazon — affiliate link](https://www.amazon.de/EEMB-2000mAh-Lithium-Polymer-JST2-0-Stecker/dp/B0B7N2T1TD?__mk_de_DE=%C3%85M%C3%85%C5%BD%C3%95%C3%91&dib=eyJ2IjoiMSJ9.s48hNAQtAlYEKRBmSWyoHtwE2_HX-mXzuSPtnJsvPippCB_4mRP4Uyc1vY7ZU9PSvfrPhaORm0hjLViwGwS2ufVargGViwdkArg4i8D1LB8QkYHK1viXctzPGViMrFRFI1PNSI2k-f5di9N5rGRO11lpZtK2IcSIsIVYaKkUH19tAakU66jILQIM2tHZScXxKtdDD0BplKYqhgv98qJXbeFqcl4bQwnax6T_pYm5SvPLdPfA8yFmrDpSLl_qL7j-E2-dl9rXU0rWOO8ykp1YSYLI_Nr6mkGEcIiQBknlR4s.9_X7atOe-wkeNcazDFP21F6t3qluQRc8cv_RL0rVy04&dib_tag=se&keywords=LiPo%2B3.7V%2B2000mAh%2BSchutzschaltung&qid=1791102150&s=ce-de&sr=1-7&th=1&linkCode=ll2&tag=xerexexe-21&linkId=d8fc50939a33134f84f84cfd6710724c&ref_=as_li_ss_tl)** |
 
-**Already have a part? Keep using it.** USB power is enough for software testing. Battery and contacts are connected and tested on the prototype; mounting on the flap is still pending. Real battery readings additionally require an INA219 module and 68 kΩ/100 kΩ resistors. See the **[full parts list and wiring notes](PARTS.md)** before ordering. Battery life and low-power operation are still being developed.
+**Already have a part? Keep using it.** USB power is enough for software testing. Battery and contacts are connected and tested on the prototype; mounting on the flap is still pending. Real battery readings require a verified measurement module (the prototype has ordered an INA3221); the USB divider already uses 8.2 kΩ / 12 kΩ resistors. See the **[full parts list and wiring notes](PARTS.md)** before ordering. Battery life and low-power operation are still being developed.
 
 ## Features and status
 
@@ -60,11 +64,12 @@ The optional automatic dashboard follows the Home Assistant profile language: Ge
 
 Phone notifications have a separate `notification_language: en` or `de` variable in each automation, because server-side notifications have no active browser profile.
 
-The current main branch keeps separate opening notifications with their event time and prepares battery-monitoring rows. Charge/source/runtime remain Unknown until real measurements are connected. See [POWER-MONITORING.md](POWER-MONITORING.md); tagged beta.3 does not include these later changes.
+The current main branch keeps separate opening notifications with their event time and prepares battery-monitoring rows. USB/battery source detection works independently; charging and runtime remain Unknown until real measurements are connected. See [POWER-MONITORING.md](POWER-MONITORING.md); tagged beta.3 does not include these later changes.
 
 ## Files
 
 - `usb-detection.yaml`: standalone USB/battery source detection; works before installing the INA219.
+- `power-monitoring-ina3221.yaml`: optional channel-1 battery monitoring for the ordered INA3221; see [setup and board checks](INA3221.md).
 - `power-monitoring.yaml`: optional INA219/USB measurement package; install the hardware first. See [wiring and calibration](POWER-MONITORING.md).
 - `cat-flap.yaml`: complete ESPHome example. Use this as the device configuration.
 - `secrets.example.yaml`: template for local credentials.

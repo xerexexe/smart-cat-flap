@@ -8,6 +8,8 @@ Eine vorhandene Katzenklappe im Fliegengitter mit einem **Seeed Studio XIAO ESP3
 
 **Aktueller Aufbau · 05.10.2026:** Akku und Reedkontakte sind angeschlossen. Der ESP verbindet sich im Akkubetrieb mit Home Assistant; eine echte Öffnungsmeldung wurde auf dem Handy empfangen. Die Montage im Rahmen und die Akkulaufzeit sind noch zu prüfen. Die Messschaltung für Akkuspannung, USB-Erkennung und Lade-/Entladestrom ist entwickelt, ihre Firmware erfolgreich kompiliert; die Zusatzteile fehlen noch. [Anschluss und Zusatzteile](POWER-MONITORING.de.md). Dieser Stand liegt im `main`-Branch; der letzte veröffentlichte Release-Tag bleibt `v0.1.0-beta.3`.
 
+**Messung · Update 2026-10-05:** Die USB-Erkennung ist installiert und zeigt USB in Home Assistant. Für das bestellte schwarze INA3221-Modul gibt es jetzt ein eigenes Firmwarepaket; die Akkuwerte bleiben bis zum geprüften Anschluss unbekannt. Siehe [INA3221-Einrichtung und Platinenprüfung](INA3221.de.md).
+
 <details>
 <summary>Kleiner Projektverlauf – was wir bisher gemacht haben</summary>
 
@@ -19,6 +21,8 @@ Eine vorhandene Katzenklappe im Fliegengitter mit einem **Seeed Studio XIAO ESP3
 - Festgestellt, dass der Akkuanschluss allein keine Ladeerkennung oder Akkumesswerte an die Software liefert.
 - Messschaltung mit INA219 und USB-Erkennung entwickelt; Firmware kompiliert und Verdrahtung dokumentiert.
 - Als Nächstes: Messteile einbauen, echte Akkuanzeigen prüfen und den Aufbau am Rahmen montieren. Tierchip-Leser bleibt zurückgestellt.
+
+- USB-Erkennung installiert und INA3221-Unterstützung für das bestellte schwarze Modul vorbereitet; Anschlussprüfung und echte Messwerte stehen noch aus.
 
 </details>
 
@@ -37,7 +41,7 @@ Verwendet wird die **NAMSAN Fliegengitter-Katzenklappe, Größe S, Schwarz** (Au
 | **Reedkontakte + Magnete** · 1 Packung, 2 Sets | Erkennen die Öffnungsrichtung der Klappe | **[Auf Amazon ansehen — Affiliate-Link](https://www.amazon.de/dp/B0C9KQRSV2?th=1&linkCode=ll2&tag=xerexexe-21&linkId=62cf6252d4e119858257c1d33c1658ba&ref_=as_li_ss_tl)** |
 | **Geschützter 3,7-V-LiPo** · 2000-mAh-Kandidat | Stromversorgung ohne USB-Kabel | **[Auf Amazon ansehen — Affiliate-Link](https://www.amazon.de/EEMB-2000mAh-Lithium-Polymer-JST2-0-Stecker/dp/B0B7N2T1TD?__mk_de_DE=%C3%85M%C3%85%C5%BD%C3%95%C3%91&dib=eyJ2IjoiMSJ9.s48hNAQtAlYEKRBmSWyoHtwE2_HX-mXzuSPtnJsvPippCB_4mRP4Uyc1vY7ZU9PSvfrPhaORm0hjLViwGwS2ufVargGViwdkArg4i8D1LB8QkYHK1viXctzPGViMrFRFI1PNSI2k-f5di9N5rGRO11lpZtK2IcSIsIVYaKkUH19tAakU66jILQIM2tHZScXxKtdDD0BplKYqhgv98qJXbeFqcl4bQwnax6T_pYm5SvPLdPfA8yFmrDpSLl_qL7j-E2-dl9rXU0rWOO8ykp1YSYLI_Nr6mkGEcIiQBknlR4s.9_X7atOe-wkeNcazDFP21F6t3qluQRc8cv_RL0rVy04&dib_tag=se&keywords=LiPo%2B3.7V%2B2000mAh%2BSchutzschaltung&qid=1791102150&s=ce-de&sr=1-7&th=1&linkCode=ll2&tag=xerexexe-21&linkId=d8fc50939a33134f84f84cfd6710724c&ref_=as_li_ss_tl)** |
 
-**Schon vorhanden? Weiterverwenden.** Für Softwaretests genügt USB-Strom. Akku und Kontakte sind am Prototyp angeschlossen und getestet; die Montage an der Klappe steht noch aus. Für die echten Akkuanzeigen werden zusätzlich ein INA219-Modul sowie 68-kΩ- und 100-kΩ-Widerstände benötigt. Vor dem Bestellen die **[vollständige Teileliste mit Anschlussinfos](PARTS.de.md)** lesen. Akkulaufzeit und Stromsparbetrieb werden noch entwickelt.
+**Schon vorhanden? Weiterverwenden.** Für Softwaretests genügt USB-Strom. Akku und Kontakte sind am Prototyp angeschlossen und getestet; die Montage an der Klappe steht noch aus. Für echte Akkuwerte wird ein geprüftes Messmodul benötigt; bestellt ist jetzt ein INA3221. Der USB-Spannungsteiler ist mit 8,2 kΩ und 12 kΩ bereits aufgebaut. Vor dem Bestellen die **[vollständige Teileliste mit Anschlussinfos](PARTS.de.md)** lesen. Akkulaufzeit und Stromsparbetrieb werden noch entwickelt.
 
 ## Funktionen und Stand
 
@@ -62,9 +66,10 @@ Handy-Meldungen haben in jeder Automation eine eigene Variable `notification_lan
 
 ## Dateien
 
-Der aktuelle main-Branch zeigt einzelne Öffnungsmeldungen mit Ereigniszeit und bereitet die Akkuanzeige vor. Ladestatus, Stromquelle und Restlaufzeit bleiben ohne echte Messsignale unbekannt. Die vollständige Zusatzteileliste und Verdrahtung stehen in [POWER-MONITORING.de.md](POWER-MONITORING.de.md); der veröffentlichte Tag beta.3 enthält diese späteren Änderungen noch nicht.
+Der aktuelle main-Branch zeigt einzelne Öffnungsmeldungen mit Ereigniszeit und bereitet die Akkuanzeige vor. Die USB-/Akku-Stromquelle wird bereits erkannt; Ladestatus und Restlaufzeit bleiben ohne Messmodul unbekannt. Die vollständige Zusatzteileliste und Verdrahtung stehen in [POWER-MONITORING.de.md](POWER-MONITORING.de.md); der veröffentlichte Tag beta.3 enthält diese späteren Änderungen noch nicht.
 
 - `usb-detection.yaml`: USB-/Akkubetrieb separat erkennen, auch ohne INA219.
+- `power-monitoring-ina3221.yaml`: optionale Akkumessung an Kanal 1 des bestellten INA3221; siehe [Einrichtung und Platinenprüfung](INA3221.de.md).
 - `power-monitoring.yaml`: optionale INA219-/USB-Messung; zuerst die Hardware einbauen. [Verdrahtung und Kalibrierung](POWER-MONITORING.de.md).
 - `cat-flap.yaml`: vollständiges ESPHome-Beispiel. Nur diese Datei als Geräte-Konfiguration verwenden.
 - `secrets.example.yaml`: Vorlage für lokale Zugangsdaten.

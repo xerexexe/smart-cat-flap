@@ -1,5 +1,7 @@
 # Battery and power monitoring
 
+> **INA3221 prototype:** The ordered black module now uses `power-monitoring-ina3221.yaml`. Use [INA3221 setup](INA3221.md) instead of the INA219-specific terminal map below; the seller diagrams are inconsistent and the delivered board still needs checking.
+
 The automatic dashboard now reserves rows for battery voltage, power source,
 charging status, estimated time remaining and the low-battery warning. Missing
 hardware measurements display **Unknown**. Installing this card does not add

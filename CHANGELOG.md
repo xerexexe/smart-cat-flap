@@ -2,6 +2,9 @@
 
 ## Unreleased — 2026-10-05
 
+- Add an INA3221 channel-1 measurement package for the ordered black module; missing hardware leaves battery measurements unknown. Document contradictory seller diagrams and pending physical terminal verification.
+- Compile and install the INA3221 prototype firmware through encrypted OTA; verify reconnection, USB source and unknown battery measurements with the module absent.
+
 - Standalone USB/battery source detection on D3; works without the INA219. Documented the tested 8.2 kΩ / 12 kΩ divider alternative.
 
 - Opening pushes keep separate notifications and include the event time.
