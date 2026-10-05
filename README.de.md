@@ -28,7 +28,7 @@ Verwendet wird die **NAMSAN Fliegengitter-Katzenklappe, Größe S, Schwarz** (Au
 | Funktion | Beta-Stand |
 |---|---|
 | Zwei Kontakte an GPIO0/GPIO1 | Implementiert; mechanische Montage noch zu testen |
-| Öffnungsrichtung innen, außen oder unklar | Implementiert; 50 ms Entprellung und 5 s Ruhezeit |
+| Öffnungsrichtung innen, außen oder unklar | Implementiert; 50 ms Entprellung und 0,5 s Ruhezeit |
 | Handy-Benachrichtigungen | HA-Automationen; Zielgerät lokal eintragen |
 | Aufgeräumtes Dashboard | Testfelder erscheinen nur bei eingeschaltetem Testmodus |
 | Virtuelle Kontakte | Implementiert; echte Eingänge werden im Testmodus ignoriert |
@@ -44,6 +44,8 @@ Das optionale automatische Dashboard folgt der Home-Assistant-Profilsprache: Deu
 Handy-Meldungen haben in jeder Automation eine eigene Variable `notification_language: en` oder `de`. Sie laufen auf dem Server und kennen kein gerade geöffnetes Benutzerprofil.
 
 ## Dateien
+
+Der aktuelle main-Branch zeigt einzelne Öffnungsmeldungen mit Ereigniszeit und bereitet die Akkuanzeige vor. Ladestatus, Stromquelle und Restlaufzeit bleiben ohne echte Messsignale unbekannt. Details stehen in [POWER-MONITORING.md](POWER-MONITORING.md) auf Englisch; der veröffentlichte Tag beta.3 enthält diese späteren Änderungen noch nicht.
 
 - `cat-flap.yaml`: vollständiges ESPHome-Beispiel. Nur diese Datei als Geräte-Konfiguration verwenden.
 - `secrets.example.yaml`: Vorlage für lokale Zugangsdaten.

@@ -26,14 +26,20 @@ These checks do not replace an ESPHome compilation of the translated examples or
 
 ## Simulate an opening
 
-1. Open the dashboard, enable Test mode and wait five seconds for Detection ready.
+On 2026-10-05 the German installation was compiled and updated over encrypted
+OTA with a 500 ms quiet period. Two simulated openings (outside, then inside)
+were accepted in one sequence lasting about two seconds. The test counter
+increased twice. Dashboard battery rows were verified with unknown real
+measurements; the hardware measurement circuits remain absent.
+
+1. Open the dashboard, enable Test mode and wait until Detection ready (at least 500 ms with both inputs inactive).
 2. Enable Test inside contact: one inside test opening. The real counter remains unchanged.
 3. Disable inside and enable outside: a return swing within the quiet period must not produce another event.
-4. Disable both, wait five quiet seconds, then enable outside: one outside test opening.
+4. Disable both, wait for Detection ready, then enable outside: one outside test opening.
 5. Held contacts must not repeat. To test `unclear`, enable both switches using one HA action; two manual clicks are not reliably within 100 ms.
 6. Disable Test mode: virtual contacts reset, the test area disappears, and physical contacts are used after the quiet period.
 
-To test a physical input in normal mode, bridge GPIO0 or GPIO1 to GND. Only bridge the specified signal pins, not supply pins. Leave both inputs inactive for five seconds between attempts.
+To test a physical input in normal mode, bridge GPIO0 or GPIO1 to GND. Only bridge the specified signal pins, not supply pins. Leave both inputs inactive until Detection ready between attempts. The current quiet period is 500 ms; older beta firmware uses five seconds.
 
 ## Simulate chip matching
 

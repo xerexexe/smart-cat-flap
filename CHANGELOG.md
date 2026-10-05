@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased — 2026-10-05
+
+- Opening pushes keep separate notifications and include the event time.
+- High Android delivery priority with a one-day TTL for offline phones.
+- Re-arm after 500 ms with both contacts inactive, replacing the five-second quiet period.
+- Automatic dashboard prepares battery voltage, source, charging, runtime and warning rows; absent measurements remain Unknown.
+- Hardware power measurements and runtime estimation are still pending.
+
 ## v0.1.0-beta.3 — 2026-10-04
 
 - Optional local dashboard card follows the HA profile language (German/English).

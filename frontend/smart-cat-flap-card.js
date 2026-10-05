@@ -259,6 +259,13 @@ const LEGACY = {
   "battery_test_event": "akku_testereignis"
 };
 const STATES = {
+  "battery": ["Battery", "Akku"],
+  "usb": ["USB", "USB"],
+  "charging": ["Charging", "Lädt"],
+  "not_charging": ["Not charging", "Lädt nicht"],
+  "full": ["Full", "Voll"],
+  "on": ["Yes", "Ja"],
+  "off": ["No", "Nein"],
   "inside": [
     "Inside",
     "Innen"
@@ -401,7 +408,27 @@ export function buildConfig(language, options = {}) {
     }
     return result;
   }
-  return {type: "vertical-stack", cards: visit(TEMPLATE)};
+  const cards = visit(TEMPLATE);
+  // Optional hardware signals stay unknown until a real measurement supplies them.
+  const suffix = key => options.legacy ? (LEGACY[key] || key) : key;
+  const label = (en, de) => language === "de" ? de : en;
+  cards[1] = {
+    type: "entities", title: label("Battery", "Akku"), show_header_toggle: false,
+    entities: [
+      ["battery_voltage", label("Battery voltage", "Akkuspannung")],
+      ["power_source", label("Power source", "Stromversorgung")],
+      ["charging_status", label("Charging status", "Ladestatus")],
+      ["estimated_runtime", label("Estimated time remaining", "Geschätzte Restlaufzeit")],
+    ].map(([key, name]) => ({
+      type: "custom:smart-cat-flap-state-row", entity: `sensor.${prefix}_${suffix(key)}`,
+      name, language, missing_is_unknown: true,
+    })),
+  };
+  cards[1].entities.push({
+    type: "custom:smart-cat-flap-state-row", entity: `binary_sensor.${prefix}_${suffix("battery_low")}`,
+    name: label("Battery low", "Akku niedrig"), language, missing_is_unknown: true,
+  });
+  return {type: "vertical-stack", cards};
 }
 
 class SmartCatFlapStateRow extends HTMLElement {
@@ -433,7 +460,9 @@ class SmartCatFlapStateRow extends HTMLElement {
     if (!this._config) return;
     const language = languageFor(hass, this._config.language || "auto");
     const state = hass.states[this._config.entity];
-    let value = translateState(state?.state || "unavailable", language);
+    let value = translateState(state?.state || (this._config.missing_is_unknown ? "unknown" : "unavailable"), language);
+    if (state && !["unknown", "unavailable"].includes(state.state) && state.attributes.unit_of_measurement)
+      value += ` ${state.attributes.unit_of_measurement}`;
     if (this._config.entity.startsWith("event.") && state && !["unknown", "unavailable"].includes(state.state)) {
       const date = new Date(state.state);
       const type = translateState(state.attributes.event_type || "unknown", language);

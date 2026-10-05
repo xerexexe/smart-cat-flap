@@ -31,9 +31,21 @@ test('localization preserves control targets and raw conditional states', () => 
   assert.deepEqual(collect(en),collect(de));
   assert.deepEqual(en.cards[3].conditions,de.cards[3].conditions);
   assert.equal(de.cards[3].conditions[0].state,'on');
-  assert.deepEqual(de.cards[1].conditions[0].state_not,['unknown','unavailable']);
+  assert.equal(de.cards[1].title,'Akku');
+  assert.ok(de.cards[1].entities.every(row => row.missing_is_unknown));
   assert.equal(de.cards[0].title,'Katzenklappe');
   assert.equal(en.cards[0].title,'Smart Cat Flap');
+});
+
+test('battery status uses real optional signals and keeps absent measurements unknown', () => {
+  const battery = buildConfig('en').cards[1];
+  assert.equal(battery.entities.length, 5);
+  assert.equal(battery.entities[1].entity, 'sensor.smart_cat_flap_power_source');
+  assert.equal(battery.entities[2].entity, 'sensor.smart_cat_flap_charging_status');
+  assert.equal(battery.entities[3].entity, 'sensor.smart_cat_flap_estimated_runtime');
+  assert.ok(battery.entities.every(row => row.type === 'custom:smart-cat-flap-state-row'));
+  assert.equal(buildConfig('de', {legacy: true}).cards[1].entities[0].entity,
+    'sensor.katzenklappe_akkuspannung');
 });
 
 test('legacy German installation maps its controls and keeps real/test data separate', () => {

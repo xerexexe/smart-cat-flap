@@ -39,7 +39,13 @@ actions:
             The cat flap opened {{ 'inward' if direction == 'inside' else 'outward' }}.
           {% endif %}
         {% endif %}
+        {{ 'Zeitpunkt' if notification_language == 'de' else 'Time' }}:
+        {{ as_local(as_datetime(trigger.to_state.state)).strftime('%d.%m.%Y %H:%M:%S') }}
       data:
-        tag: "cat_flap_{{ trigger.id }}"
+        # Each event keeps its own notification instead of replacing the previous one.
+        tag: "cat_flap_{{ trigger.id }}_{{ trigger.to_state.state }}"
+        priority: high
+        # Retain delivery for an offline phone; ttl: 0 would discard offline messages.
+        ttl: 86400
 mode: queued
-max: 10
+max: 100

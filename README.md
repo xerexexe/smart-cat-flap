@@ -28,7 +28,7 @@ The flap used for this project is the **NAMSAN screen-door cat flap, size S, bla
 | Feature | Beta status |
 |---|---|
 | Two contacts on GPIO0/GPIO1 | Implemented; installation still needs physical testing |
-| Inside, outside or unclear opening direction | Implemented; 50 ms debounce and 5 s quiet period |
+| Inside, outside or unclear opening direction | Implemented; 50 ms debounce and 0.5 s quiet period |
 | Phone notifications | HA automation examples; configure your own notification target |
 | Clean dashboard | Test controls and results appear only when test mode is on |
 | Virtual contacts | Implemented; physical inputs are ignored in test mode |
@@ -42,6 +42,8 @@ The flap used for this project is the **NAMSAN screen-door cat flap, size S, bla
 The optional automatic dashboard follows the Home Assistant profile language: German profiles get German labels and results; other languages use English. See [LOCALIZATION.md](LOCALIZATION.md) for installation. Existing German firmware is supported without reflashing. Entity names in device settings and detail dialogs remain as registered.
 
 Phone notifications have a separate `notification_language: en` or `de` variable in each automation, because server-side notifications have no active browser profile.
+
+The current main branch keeps separate opening notifications with their event time and prepares battery-monitoring rows. Charge/source/runtime remain Unknown until real measurements are connected. See [POWER-MONITORING.md](POWER-MONITORING.md); tagged beta.3 does not include these later changes.
 
 ## Files
 

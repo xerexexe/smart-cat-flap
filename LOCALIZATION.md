@@ -42,6 +42,12 @@ These static templates need no additional resource. They do not automatically fo
 
 ## Phone notifications
 
+The automatic card shows battery monitoring rows even before the measurement
+hardware is installed. Missing measurements remain Unknown. See
+[POWER-MONITORING.md](POWER-MONITORING.md) for the optional entity contract and
+the hardware still needed; the display does not estimate charge or runtime
+from connectivity.
+
 Each automation has a separate variable:
 
 ```yaml
