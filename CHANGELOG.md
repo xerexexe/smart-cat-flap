@@ -2,6 +2,8 @@
 
 ## Unreleased — 2026-10-06
 
+- Round dashboard voltage to two decimal places using the selected language; update English/German documentation to the installed INA3221 prototype and confirmed USB-powered charging readings.
+
 - Make INA3221 I2C pins configurable; adapt the physical prototype to SDA on D5 and SCL on D4 without resoldering.
 - Verify detection at address 0x40 after encrypted OTA; investigate connection interruptions before confirming physical battery measurements.
 - Observe initial USB-powered battery readings around 3.71 V and −0.114 A with Charging shown in Home Assistant; battery-only stability and runtime calibration remain pending.

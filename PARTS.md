@@ -1,6 +1,6 @@
 # Parts list
 
-> **Prototype update:** The black INA3221 module has been ordered instead of the INA219. Its package and pending board verification are documented in [INA3221.md](INA3221.md). The existing USB divider uses 8.2 kΩ / 12 kΩ; these do not need replacing with 68 kΩ / 100 kΩ.
+> **Prototype update:** The black INA3221 module is installed instead of the INA219; initial USB-powered charging readings are confirmed. Its actual wiring, package and measurement status are documented in [INA3221.md](INA3221.md). The existing USB divider uses 8.2 kΩ / 12 kΩ; these do not need replacing with 68 kΩ / 100 kΩ.
 
 **English** | [Deutsch](PARTS.de.md)
 

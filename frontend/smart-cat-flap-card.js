@@ -462,6 +462,12 @@ class SmartCatFlapStateRow extends HTMLElement {
     const language = languageFor(hass, this._config.language || "auto");
     const state = hass.states[this._config.entity];
     let value = translateState(state?.state || (this._config.missing_is_unknown ? "unknown" : "unavailable"), language);
+    if (state?.attributes.unit_of_measurement === "V" &&
+        state.state.trim() !== "" && Number.isFinite(Number(state.state))) {
+      value = new Intl.NumberFormat(language, {
+        minimumFractionDigits: 2, maximumFractionDigits: 2,
+      }).format(Number(state.state));
+    }
     if (state && !["unknown", "unavailable"].includes(state.state) && state.attributes.unit_of_measurement)
       value += ` ${state.attributes.unit_of_measurement}`;
     if (this._config.entity.startsWith("event.") && state && !["unknown", "unavailable"].includes(state.state)) {

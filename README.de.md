@@ -6,9 +6,7 @@
 
 Eine vorhandene Katzenklappe im Fliegengitter mit einem **Seeed Studio XIAO ESP32-C6**, ESPHome und Home Assistant erweitern. Zwei Reedkontakte erfassen die Schwenkrichtung. Home Assistant meldet Öffnungen auf dem Handy. Ein Testmodus ermöglicht Tests der Erkennung, Meldungen und späteren Erweiterungen.
 
-**Aktueller Aufbau · 05.10.2026:** Akku und Reedkontakte sind angeschlossen. Der ESP verbindet sich im Akkubetrieb mit Home Assistant; eine echte Öffnungsmeldung wurde auf dem Handy empfangen. Die Montage im Rahmen und die Akkulaufzeit sind noch zu prüfen. Die Messschaltung für Akkuspannung, USB-Erkennung und Lade-/Entladestrom ist entwickelt, ihre Firmware erfolgreich kompiliert; die Zusatzteile fehlen noch. [Anschluss und Zusatzteile](POWER-MONITORING.de.md). Dieser Stand liegt im `main`-Branch; der letzte veröffentlichte Release-Tag bleibt `v0.1.0-beta.3`.
-
-**Messung · Update 2026-10-05:** Die USB-Erkennung ist installiert und zeigt USB in Home Assistant. Für das bestellte schwarze INA3221-Modul gibt es jetzt ein eigenes Firmwarepaket; die Akkuwerte bleiben bis zum geprüften Anschluss unbekannt. Siehe [INA3221-Einrichtung und Platinenprüfung](INA3221.de.md).
+**Aktueller Aufbau · 06.10.2026:** Akku, Reedkontakte und das schwarze INA3221-Modul sind angeschlossen. Die Firmware wurde auf **SDA an D5/GPIO23 und SCL an D4/GPIO22** angepasst; das Modul wird unter `0x40` erkannt. Mit USB zeigte Home Assistant etwa **3,71 V**, **114 mA Ladestrom** und **Lädt**. Verbindungsabbrüche im reinen Akkubetrieb müssen noch untersucht werden; Laufzeitkalibrierung, Akkulaufzeit und Montage im Rahmen stehen aus. Siehe [aktuelle Verdrahtung und Messstand](INA3221.de.md). Dieser Stand liegt im `main`-Branch; der letzte veröffentlichte Release-Tag bleibt `v0.1.0-beta.3`.
 
 <details>
 <summary>Kleiner Projektverlauf – was wir bisher gemacht haben</summary>
@@ -20,9 +18,10 @@ Eine vorhandene Katzenklappe im Fliegengitter mit einem **Seeed Studio XIAO ESP3
 - Schnelle Folgemeldungen verbessert: kürzere Ruhezeit, einzelne Benachrichtigungen mit Ereigniszeit.
 - Festgestellt, dass der Akkuanschluss allein keine Ladeerkennung oder Akkumesswerte an die Software liefert.
 - Messschaltung mit INA219 und USB-Erkennung entwickelt; Firmware kompiliert und Verdrahtung dokumentiert.
-- Als Nächstes: Messteile einbauen, echte Akkuanzeigen prüfen und den Aufbau am Rahmen montieren. Tierchip-Leser bleibt zurückgestellt.
+- Als Nächstes: Akkubetrieb stabilisieren, Restlaufzeit kalibrieren und den Aufbau am Rahmen montieren. Tierchip-Leser bleibt zurückgestellt.
 
-- USB-Erkennung installiert und INA3221-Unterstützung für das bestellte schwarze Modul vorbereitet; Anschlussprüfung und echte Messwerte stehen noch aus.
+- INA3221 angeschlossen, SDA/SCL in der Firmware ohne erneutes Löten angepasst und erste Messwerte sowie Ladeerkennung mit USB bestätigt.
+- Spannungsanzeige auf zwei Nachkommastellen gerundet; das Dezimalzeichen folgt der gewählten Sprache.
 
 </details>
 
@@ -41,7 +40,7 @@ Verwendet wird die **NAMSAN Fliegengitter-Katzenklappe, Größe S, Schwarz** (Au
 | **Reedkontakte + Magnete** · 1 Packung, 2 Sets | Erkennen die Öffnungsrichtung der Klappe | **[Auf Amazon ansehen — Affiliate-Link](https://www.amazon.de/dp/B0C9KQRSV2?th=1&linkCode=ll2&tag=xerexexe-21&linkId=62cf6252d4e119858257c1d33c1658ba&ref_=as_li_ss_tl)** |
 | **Geschützter 3,7-V-LiPo** · 2000-mAh-Kandidat | Stromversorgung ohne USB-Kabel | **[Auf Amazon ansehen — Affiliate-Link](https://www.amazon.de/EEMB-2000mAh-Lithium-Polymer-JST2-0-Stecker/dp/B0B7N2T1TD?__mk_de_DE=%C3%85M%C3%85%C5%BD%C3%95%C3%91&dib=eyJ2IjoiMSJ9.s48hNAQtAlYEKRBmSWyoHtwE2_HX-mXzuSPtnJsvPippCB_4mRP4Uyc1vY7ZU9PSvfrPhaORm0hjLViwGwS2ufVargGViwdkArg4i8D1LB8QkYHK1viXctzPGViMrFRFI1PNSI2k-f5di9N5rGRO11lpZtK2IcSIsIVYaKkUH19tAakU66jILQIM2tHZScXxKtdDD0BplKYqhgv98qJXbeFqcl4bQwnax6T_pYm5SvPLdPfA8yFmrDpSLl_qL7j-E2-dl9rXU0rWOO8ykp1YSYLI_Nr6mkGEcIiQBknlR4s.9_X7atOe-wkeNcazDFP21F6t3qluQRc8cv_RL0rVy04&dib_tag=se&keywords=LiPo%2B3.7V%2B2000mAh%2BSchutzschaltung&qid=1791102150&s=ce-de&sr=1-7&th=1&linkCode=ll2&tag=xerexexe-21&linkId=d8fc50939a33134f84f84cfd6710724c&ref_=as_li_ss_tl)** |
 
-**Schon vorhanden? Weiterverwenden.** Für Softwaretests genügt USB-Strom. Akku und Kontakte sind am Prototyp angeschlossen und getestet; die Montage an der Klappe steht noch aus. Für echte Akkuwerte wird ein geprüftes Messmodul benötigt; bestellt ist jetzt ein INA3221. Der USB-Spannungsteiler ist mit 8,2 kΩ und 12 kΩ bereits aufgebaut. Vor dem Bestellen die **[vollständige Teileliste mit Anschlussinfos](PARTS.de.md)** lesen. Akkulaufzeit und Stromsparbetrieb werden noch entwickelt.
+**Schon vorhanden? Weiterverwenden.** Für Softwaretests genügt USB-Strom. Akku und Kontakte sind am Prototyp angeschlossen und getestet; die Montage an der Klappe steht noch aus. Der Prototyp nutzt jetzt den INA3221 für echte Akkuwerte. Der USB-Spannungsteiler ist mit 8,2 kΩ und 12 kΩ bereits aufgebaut. Vor dem Bestellen die **[vollständige Teileliste mit Anschlussinfos](PARTS.de.md)** lesen. Akkulaufzeit und Stromsparbetrieb werden noch entwickelt.
 
 ## Funktionen und Stand
 
@@ -53,7 +52,7 @@ Verwendet wird die **NAMSAN Fliegengitter-Katzenklappe, Größe S, Schwarz** (Au
 | Aufgeräumtes Dashboard | Testfelder erscheinen nur bei eingeschaltetem Testmodus |
 | Virtuelle Kontakte | Implementiert; echte Eingänge werden im Testmodus ignoriert |
 | Chipnummer-Abgleich | Software und Simulation vorhanden; echter RFID-Leser fehlt |
-| Akkuwarnung und Messwerte | INA219-/USB-Erweiterung kompiliert; Messhardware noch einzubauen |
+| Akkuwarnung und Messwerte | INA3221-Spannung und Ladeerkennung mit USB bestätigt; Akkubetrieb und Laufzeitkalibrierung noch zu prüfen |
 | Akkubetrieb | Am Prototyp bestätigt; Laufzeit noch nicht gemessen |
 | Deep Sleep | Noch nicht implementiert |
 | Antenne, Leser-Treiber und 3D-Druck | Geplant; noch nicht enthalten |
@@ -66,10 +65,10 @@ Handy-Meldungen haben in jeder Automation eine eigene Variable `notification_lan
 
 ## Dateien
 
-Der aktuelle main-Branch zeigt einzelne Öffnungsmeldungen mit Ereigniszeit und bereitet die Akkuanzeige vor. Die USB-/Akku-Stromquelle wird bereits erkannt; Ladestatus und Restlaufzeit bleiben ohne Messmodul unbekannt. Die vollständige Zusatzteileliste und Verdrahtung stehen in [POWER-MONITORING.de.md](POWER-MONITORING.de.md); der veröffentlichte Tag beta.3 enthält diese späteren Änderungen noch nicht.
+Der aktuelle main-Branch zeigt einzelne Öffnungsmeldungen mit Ereigniszeit und bereitet die Akkuanzeige vor. USB-/Akku-Stromquelle und erste INA3221-Lademesswerte werden angezeigt; die Restlaufzeit bleibt bis zur Kalibrierung unbekannt. Die vollständige Zusatzteileliste und Verdrahtung stehen in [POWER-MONITORING.de.md](POWER-MONITORING.de.md); der veröffentlichte Tag beta.3 enthält diese späteren Änderungen noch nicht.
 
 - `usb-detection.yaml`: USB-/Akkubetrieb separat erkennen, auch ohne INA219.
-- `power-monitoring-ina3221.yaml`: optionale Akkumessung an Kanal 1 des bestellten INA3221; siehe [Einrichtung und Platinenprüfung](INA3221.de.md).
+- `power-monitoring-ina3221.yaml`: optionale Akkumessung an Kanal 1 des angeschlossenen INA3221; siehe [Einrichtung und Platinenprüfung](INA3221.de.md).
 - `power-monitoring.yaml`: optionale INA219-/USB-Messung; zuerst die Hardware einbauen. [Verdrahtung und Kalibrierung](POWER-MONITORING.de.md).
 - `cat-flap.yaml`: vollständiges ESPHome-Beispiel. Nur diese Datei als Geräte-Konfiguration verwenden.
 - `secrets.example.yaml`: Vorlage für lokale Zugangsdaten.
@@ -125,7 +124,7 @@ Die zwei Richtungskontakte liefern keinen zuverlässigen dauerhaft offenen/gesch
 
 ## Akkuanzeige und spätere RFID-Erweiterung
 
-Der geschützte 3,7-V-/2000-mAh-Akku ist am Prototyp angeschlossen; die Verbindung zu Home Assistant funktioniert auch ohne USB. Laden erfolgt über die integrierte Ladeschaltung des XIAO. Der Akkuanschluss allein liefert der Software jedoch keine Messwerte. Die optionale [INA219-/USB-Messschaltung](POWER-MONITORING.de.md) ergänzt Akkuspannung, Lade-/Entladestrom, Stromquelle und eine grobe Restzeitschätzung. Ihr Einbau und die Prüfung der Messwerte stehen noch aus. Die vorhandenen BAT-Lötstellen müssen dafür nicht erneut erhitzt werden. Die Firmware enthält keinen Tiefentladeschutz; Dauer-WLAN und Akkulaufzeit sind noch nicht optimiert.
+Der geschützte 3,7-V-/2000-mAh-Akku ist am Prototyp angeschlossen; die Verbindung zu Home Assistant funktioniert auch ohne USB. Laden erfolgt über die integrierte Ladeschaltung des XIAO. Der Akkuanschluss allein liefert der Software jedoch keine Messwerte. Die angeschlossene [INA3221-/USB-Messschaltung](INA3221.de.md) liefert Akkuspannung und Ladestrom. Entlademessung, Stabilität im Akkubetrieb und die manuell kalibrierte Restlaufzeit müssen noch geprüft werden. Die vorhandenen BAT-Lötstellen müssen dafür nicht erneut erhitzt werden. Die Firmware enthält keinen Tiefentladeschutz; Dauer-WLAN und Akkulaufzeit sind noch nicht optimiert.
 
 Für implantierte Tierchips ist ein zum tatsächlichen Chip passender Leser erforderlich. FDX-B mit 134,2 kHz ist die bisherige Planungsannahme. Eine passive Antennenspule allein an GPIOs ersetzt kein Lesemodul. Leser, Antennenabstimmung, Pegel und Protokoll sind noch festzulegen; es ist kein erfundener UART-Treiber enthalten.
 

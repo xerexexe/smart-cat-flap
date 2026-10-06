@@ -1,6 +1,6 @@
 # Teileliste
 
-> **Prototyp-Update:** Statt des INA219 ist das schwarze INA3221-Modul bestellt. Firmware und ausstehende Platinenprüfung stehen in [INA3221.de.md](INA3221.de.md). Der bestehende USB-Teiler nutzt 8,2 kΩ / 12 kΩ; ein Austausch gegen 68 kΩ / 100 kΩ ist nicht nötig.
+> **Prototyp-Update:** Statt des INA219 ist das schwarze INA3221-Modul angeschlossen; erste Lademesswerte mit USB sind bestätigt. Tatsächliche Verdrahtung, Firmware und Messstand stehen in [INA3221.de.md](INA3221.de.md). Der bestehende USB-Teiler nutzt 8,2 kΩ / 12 kΩ; ein Austausch gegen 68 kΩ / 100 kΩ ist nicht nötig.
 
 [English](PARTS.md) | **Deutsch**
 

@@ -9,7 +9,7 @@ The card wraps Home Assistant's native cards and controls. It translates custom 
 ### Installation
 
 1. Copy `frontend/smart-cat-flap-card.js` to `<HA config>/www/smart-cat-flap-card.js`. Create the `www` folder if necessary.
-2. Under Settings → Dashboards → Resources, add `/local/smart-cat-flap-card.js?v=0.1.0-beta.3` as a **JavaScript module**. Advanced mode may be required to see Resources.
+2. Under Settings → Dashboards → Resources, add `/local/smart-cat-flap-card.js?v=20261006-voltage` as a **JavaScript module** for current main. Update an existing resource instead of adding a second copy, then reload the dashboard. Advanced mode may be required to see Resources.
 3. Create a dedicated empty dashboard and paste `dashboard-auto.yaml` into its raw configuration editor. Keep the static dashboard as a fallback if desired.
 4. Reload the browser. For updates, replace the file and change the version query in the resource URL to avoid cached code.
 5. Exit dashboard edit mode. Test controls appear only when Test mode is on.

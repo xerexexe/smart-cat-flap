@@ -1,6 +1,6 @@
 # Akku- und USB-Messung
 
-> **INA3221-Prototyp:** Für das bestellte schwarze Modul gibt es `power-monitoring-ina3221.yaml`. Dafür die [INA3221-Anleitung](INA3221.de.md) verwenden, nicht die INA219-Anschlussbelegung unten. Die Händlerbilder widersprechen sich; die gelieferte Platine muss noch geprüft werden.
+> **INA3221-Prototyp:** Für das angeschlossene schwarze Modul gibt es `power-monitoring-ina3221.yaml`. Dafür die [INA3221-Anleitung](INA3221.de.md) verwenden, nicht die INA219-Anschlussbelegung unten. Die Händlerbilder widersprechen sich; die INA3221-Anleitung dokumentiert die tatsächliche Verdrahtung und die bestätigten Lademesswerte.
 
 [English](POWER-MONITORING.md) | **Deutsch**
 
