@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased — 2026-10-06
+
+- Make INA3221 I2C pins configurable; adapt the physical prototype to SDA on D5 and SCL on D4 without resoldering.
+- Verify detection at address 0x40 after encrypted OTA; investigate connection interruptions before confirming physical battery measurements.
+
 ## Unreleased — 2026-10-05
 
 - Add an INA3221 channel-1 measurement package for the ordered black module; missing hardware leaves battery measurements unknown. Document contradictory seller diagrams and pending physical terminal verification.

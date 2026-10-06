@@ -6,14 +6,16 @@ substitutions:
   pm_battery_script: process_battery
   pm_voltage_id: real_battery_voltage
   pm_warning_id: real_battery_warning
+  pm_sda_pin: GPIO22 # Default: XIAO D4; override to match your wiring.
+  pm_scl_pin: GPIO23 # Default: XIAO D5; override to match your wiring.
 
 packages:
   usb_detection: !include usb-detection.yaml
 
 i2c:
   id: pm_i2c
-  sda: GPIO22 # XIAO D4
-  scl: GPIO23 # XIAO D5
+  sda: ${pm_sda_pin}
+  scl: ${pm_scl_pin}
   scan: true
   frequency: 100kHz
 
