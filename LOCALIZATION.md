@@ -68,3 +68,7 @@ Run `node --test tests/localization.test.mjs` (Node.js 20 or newer). Tests cover
 Changing profile language changes the card labels and displayed text states. Built-in controls follow Home Assistant's own translations. Detailed entity dialogs show the underlying entity's original name and state.
 
 References: [custom cards](https://developers.home-assistant.io/docs/frontend/custom-ui/custom-card/), [frontend data](https://developers.home-assistant.io/docs/frontend/data/), [frontend language](https://www.home-assistant.io/integrations/frontend/).
+
+## Optional reliable delivery controls
+
+After installing `reliable-delivery.yaml` and `battery-saving.yaml`, add `reliable_delivery: true` to the custom card configuration. It adds localized battery-saving controls and journal diagnostics; leave it absent for devices without these packages. See [setup](BATTERY-SAVING.md) / [Deutsch](BATTERY-SAVING.de.md).

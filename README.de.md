@@ -6,7 +6,7 @@
 
 Eine vorhandene Katzenklappe im Fliegengitter mit einem **Seeed Studio XIAO ESP32-C6**, ESPHome und Home Assistant erweitern. Zwei Reedkontakte erfassen die Schwenkrichtung. Home Assistant meldet Öffnungen auf dem Handy. Ein Testmodus ermöglicht Tests der Erkennung, Meldungen und späteren Erweiterungen.
 
-**Aktueller Aufbau · 06.10.2026:** Akku, Reedkontakte und das schwarze INA3221-Modul sind angeschlossen. Die Firmware wurde auf **SDA an D5/GPIO23 und SCL an D4/GPIO22** angepasst; das Modul wird unter `0x40` erkannt. Mit USB zeigte Home Assistant etwa **3,71 V**, **114 mA Ladestrom** und **Lädt**. Verbindungsabbrüche im reinen Akkubetrieb müssen noch untersucht werden; Laufzeitkalibrierung, Akkulaufzeit und Montage im Rahmen stehen aus. Siehe [aktuelle Verdrahtung und Messstand](INA3221.de.md). Dieser Stand liegt im `main`-Branch; der letzte veröffentlichte Release-Tag bleibt `v0.1.0-beta.3`.
+**Aktueller Aufbau · 07.10.2026:** Akku, Reedkontakte und schwarzer INA3221 sind angeschlossen (SDA D5/GPIO23, SCL D4/GPIO22; Adresse `0x40`). Akkubetrieb und Voll-Akku-Kalibrierung wurden geprüft. Dauer-WLAN ergibt nur wenige Tage geschätzte Laufzeit. Die optionale [Erweiterung für Stromsparen und gepufferte Zustellung](BATTERY-SAVING.de.md) ergänzt ein einstellbares 5-Minuten-Meldeintervall und einen dauerhaften Öffnungspuffer. Stromsparen ist experimentell und standardmäßig AUS; Aufwachen mit echten Kontakten und tatsächliche Akkulaufzeit müssen noch gemessen werden. Rahmenmontage und Tierchip-Erkennung stehen aus. Stand im `main`-Branch; letzter Release-Tag weiterhin `v0.1.0-beta.3`.
 
 <details>
 <summary>Kleiner Projektverlauf – was wir bisher gemacht haben</summary>
@@ -18,10 +18,12 @@ Eine vorhandene Katzenklappe im Fliegengitter mit einem **Seeed Studio XIAO ESP3
 - Schnelle Folgemeldungen verbessert: kürzere Ruhezeit, einzelne Benachrichtigungen mit Ereigniszeit.
 - Festgestellt, dass der Akkuanschluss allein keine Ladeerkennung oder Akkumesswerte an die Software liefert.
 - Messschaltung mit INA219 und USB-Erkennung entwickelt; Firmware kompiliert und Verdrahtung dokumentiert.
-- Als Nächstes: Akkubetrieb stabilisieren, Restlaufzeit kalibrieren und den Aufbau am Rahmen montieren. Tierchip-Leser bleibt zurückgestellt.
 
 - INA3221 angeschlossen, SDA/SCL in der Firmware ohne erneutes Löten angepasst und erste Messwerte sowie Ladeerkennung mit USB bestätigt.
 - Spannungsanzeige auf zwei Nachkommastellen gerundet; das Dezimalzeichen folgt der gewählten Sprache.
+- Nach Nachlöten der Masseverbindung Akkubetrieb geprüft und den vollen Akku zur Laufzeitschätzung bestätigt.
+- Dauer-WLAN braucht zu viel Strom: regelmäßige Meldungen und einen Flash-Puffer mit Bestätigung durch Home Assistant ergänzt.
+- Als Nächstes: Aufwachen mit echten Kontakten testen, Verbrauch messen und Rahmenmontage. Tierchip-Leser bleibt zurückgestellt.
 
 </details>
 
@@ -118,13 +120,13 @@ Ein Magnet bewegt sich mit der Klappe. In Mittelstellung sollen beide Kontakte i
 
 Der erste Kontakt bestimmt die Richtung. Werden beide innerhalb von 100 ms erkannt, lautet das Ergebnis `unclear`. Ein Ereignis wird erst nach 500 ms mit beiden Kontakten inaktiv erneut zugelassen. Auch nach Neustart und Umschalten des Testmodus wird diese Ruhezeit abgewartet.
 
-Rückschwingen wird dadurch meist unterdrückt. Zwei schnelle tatsächliche Öffnungen können zusammengefasst werden; spätes Nachschwingen kann erneut gezählt werden. Die Zähler beginnen nach jedem ESP-Neustart bei null. Während eines Verbindungsausfalls verlorene Ereignisse werden nicht nachgeliefert.
+Rückschwingen wird dadurch meist unterdrückt. Zwei schnelle tatsächliche Öffnungen können zusammengefasst werden; spätes Nachschwingen kann erneut gezählt werden. Die Zähler beginnen nach jedem ESP-Neustart bei null. Die Basiskonfiguration liefert verpasste Ereignisse nicht nach. Das optionale [Zustellungspaket](BATTERY-SAVING.de.md) behält bis zu 256 Öffnungen bis zur Bestätigung durch Home Assistant und meldet Pufferüberlauf oder Speicherfehler.
 
 Die zwei Richtungskontakte liefern keinen zuverlässigen dauerhaft offenen/geschlossenen Zustand. Es gibt keinen Verriegelungsantrieb und keine Zutrittskontrolle. Die Chip-Auswertung liefert nur das letzte Leseergebnis und ist noch nicht mit einer Öffnung verknüpft.
 
 ## Akkuanzeige und spätere RFID-Erweiterung
 
-Der geschützte 3,7-V-/2000-mAh-Akku ist am Prototyp angeschlossen; die Verbindung zu Home Assistant funktioniert auch ohne USB. Laden erfolgt über die integrierte Ladeschaltung des XIAO. Der Akkuanschluss allein liefert der Software jedoch keine Messwerte. Die angeschlossene [INA3221-/USB-Messschaltung](INA3221.de.md) liefert Akkuspannung und Ladestrom. Entlademessung, Stabilität im Akkubetrieb und die manuell kalibrierte Restlaufzeit müssen noch geprüft werden. Die vorhandenen BAT-Lötstellen müssen dafür nicht erneut erhitzt werden. Die Firmware enthält keinen Tiefentladeschutz; Dauer-WLAN und Akkulaufzeit sind noch nicht optimiert.
+Der geschützte 3,7-V-/2000-mAh-Akku ist angeschlossen; die Verbindung funktioniert ohne USB. Laden erfolgt über den XIAO. Die [INA3221-/USB-Messschaltung](INA3221.de.md) liefert Spannung und Strom mit Richtung. Die Restlaufzeit verwendet einen bestätigten vollen Akku und gemessenen Entladestrom; sie bleibt eine Schätzung und die Kalibrierung wird bei Neustarts zurückgesetzt. Die Firmware bietet keinen Hardware-Tiefentladeschutz. Der Nutzen des [experimentellen Stromsparmodus](BATTERY-SAVING.de.md) muss am echten Aufbau gemessen werden.
 
 Für implantierte Tierchips ist ein zum tatsächlichen Chip passender Leser erforderlich. FDX-B mit 134,2 kHz ist die bisherige Planungsannahme. Eine passive Antennenspule allein an GPIOs ersetzt kein Lesemodul. Leser, Antennenabstimmung, Pegel und Protokoll sind noch festzulegen; es ist kein erfundener UART-Treiber enthalten.
 

@@ -1,0 +1,149 @@
+# Experimental, OFF by default. Requires reliable-delivery.yaml and USB detection.
+# GPIO0/1 are the existing active-low contacts; GPIO21 is USB detection.
+substitutions:
+  saving_ready_id: ready
+  saving_pending_id: pending_direction
+  saving_test_mode_id: test_mode
+  saving_opening_id: opening
+  saving_test_opening_id: test_opening
+  saving_inside_contact_id: inside_contact
+  saving_outside_contact_id: outside_contact
+
+esphome:
+  includes:
+    - <esp_sleep.h>
+    - <driver/gpio.h>
+  on_boot:
+    priority: -100
+    then:
+      - lambda: |-
+          id(radio_window_start) = millis();
+          id(last_report_cycle) = millis();
+
+wifi:
+  id: saving_wifi
+  reboot_timeout: 0s
+
+# GPIO wake-up changes the hardware interrupt type. Poll after wake-up rather
+# than sharing those pins with ESPHome's edge-triggered ISR state cache.
+binary_sensor:
+  - id: !extend ${saving_inside_contact_id}
+    use_interrupt: false
+  - id: !extend ${saving_outside_contact_id}
+    use_interrupt: false
+  - id: !extend pm_usb_present
+    use_interrupt: false
+
+globals:
+  - id: radio_awake
+    type: bool
+    initial_value: 'true'
+  - id: radio_window_start
+    type: uint32_t
+    initial_value: '0'
+  - id: last_report_cycle
+    type: uint32_t
+    initial_value: '0'
+
+number:
+  - platform: template
+    id: reporting_minutes
+    name: Reporting interval
+    entity_category: config
+    unit_of_measurement: min
+    min_value: 1
+    max_value: 60
+    step: 1
+    initial_value: 5
+    restore_value: true
+    optimistic: true
+    mode: box
+
+switch:
+  - platform: template
+    id: battery_saving
+    name: Experimental battery saving
+    entity_category: config
+    optimistic: true
+    restore_mode: ALWAYS_OFF
+    turn_off_action:
+      - script.execute: wake_radio
+
+script:
+  - id: wake_radio
+    then:
+      - lambda: |-
+          if (!id(radio_awake)) {
+            id(radio_awake) = true;
+            id(radio_window_start) = millis();
+            id(last_report_cycle) = millis();
+            id(delivery_last_send) = 0;
+          }
+      - wifi.enable:
+
+event:
+  - id: !extend ${saving_opening_id}
+    on_event:
+      - script.execute: wake_radio
+  - id: !extend ${saving_test_opening_id}
+    on_event:
+      - script.execute: wake_radio
+
+interval:
+  - interval: 20ms
+    then:
+      - if:
+          condition:
+            lambda: |-
+              return !id(battery_saving).state || id(${saving_test_mode_id}).state ||
+                !id(pm_usb_present).has_state() || id(pm_usb_present).state;
+          then:
+            - if:
+                condition:
+                  lambda: return !id(radio_awake);
+                then:
+                  - script.execute: wake_radio
+          else:
+            - lambda: |-
+                const uint32_t now = millis();
+                const uint32_t period = uint32_t(id(reporting_minutes).state) * 60000UL;
+                // Never sleep with an active raw contact or unfinished detection.
+                const bool quiet = gpio_get_level(GPIO_NUM_0) && gpio_get_level(GPIO_NUM_1) &&
+                  id(${saving_ready_id}) && id(${saving_pending_id}) == 0;
+                if (!quiet) {
+                  if (!id(radio_awake)) id(wake_radio).execute();
+                  return;
+                }
+                if (!id(radio_awake) && uint32_t(now - id(last_report_cycle)) >= period) {
+                  id(wake_radio).execute();
+                  return;
+                }
+                if (id(radio_awake)) {
+                  const uint32_t awake_ms = now - id(radio_window_start);
+                  const bool acknowledged = id(opening_journal).size() == 0 &&
+                    esphome::api::global_api_server->is_connected_with_state_subscription();
+                  // Leave a connection window; failed Wi-Fi/HA attempts are bounded.
+                  if ((awake_ms >= 10000 && acknowledged) || awake_ms >= 60000) {
+                    id(radio_awake) = false;
+                    id(last_report_cycle) = now;
+                    id(saving_wifi).disable();
+                  }
+                  return;
+                }
+                // Light sleep retains the running detector and calibration. Short timer
+                // slices allow ESPHome timers, INA readings and watchdogs to keep running.
+                gpio_wakeup_enable(GPIO_NUM_0, GPIO_INTR_LOW_LEVEL);
+                gpio_wakeup_enable(GPIO_NUM_1, GPIO_INTR_LOW_LEVEL);
+                gpio_wakeup_enable(GPIO_NUM_21, GPIO_INTR_HIGH_LEVEL);
+                esp_sleep_enable_gpio_wakeup();
+                esp_sleep_enable_timer_wakeup(50000);
+                const esp_err_t result = esp_light_sleep_start();
+                esp_sleep_disable_wakeup_source(ESP_SLEEP_WAKEUP_GPIO);
+                esp_sleep_disable_wakeup_source(ESP_SLEEP_WAKEUP_TIMER);
+                gpio_wakeup_disable(GPIO_NUM_0);
+                gpio_wakeup_disable(GPIO_NUM_1);
+                gpio_wakeup_disable(GPIO_NUM_21);
+                if (result != ESP_OK) {
+                  ESP_LOGE("saving", "Light sleep failed (%d); battery saving disabled", int(result));
+                  id(battery_saving).turn_off();
+                }

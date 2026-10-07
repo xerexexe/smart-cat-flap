@@ -1,0 +1,119 @@
+# Optional package: durable FIFO + explicit acknowledgement. Replace the opening
+# notification automation with reliable-opening-automation.yaml before using this.
+substitutions:
+  delivery_opening_id: opening
+  delivery_test_opening_id: test_opening
+
+esphome:
+  includes:
+    # ESPHome puts local includes after global declarations. Include the type
+    # early as well; the local entry below copies the header into the build.
+    - <event-journal.h>
+    - event-journal.h
+  on_boot:
+    priority: -100
+    then:
+      - lambda: id(opening_journal).begin();
+
+api:
+  reboot_timeout: 0s # A network outage must not repeatedly reset detection.
+  actions:
+    - action: acknowledge_opening
+      variables:
+        event_id: string
+      then:
+        - lambda: |-
+            if (id(opening_journal).acknowledge(std::string(event_id.c_str()))) {
+              ESP_LOGI("delivery", "Opening acknowledged; %u pending", id(opening_journal).size());
+              id(delivery_last_send) = 0;
+            }
+
+time:
+  - platform: homeassistant
+    id: delivery_clock
+
+globals:
+  - id: opening_journal
+    type: cat_flap::EventJournal
+  - id: delivery_last_send
+    type: uint32_t
+    initial_value: '0'
+  - id: delivery_attempt
+    type: uint32_t
+    initial_value: '0'
+
+text_sensor:
+  - platform: template
+    id: pending_opening_payload
+    name: Pending opening payload
+    entity_category: diagnostic
+    update_interval: never
+
+event:
+  - id: !extend ${delivery_opening_id}
+    on_event:
+      - lambda: |-
+          const uint8_t direction = event_type == "inside" || event_type == "innen" ? 1 :
+            event_type == "outside" || event_type == "aussen" ? 2 : 3;
+          const auto now = id(delivery_clock).now();
+          if (!id(opening_journal).append(direction, false, now.is_valid() ? now.timestamp : 0))
+            ESP_LOGE("delivery", "Opening journal full or flash write failed; inspect diagnostics");
+  - id: !extend ${delivery_test_opening_id}
+    on_event:
+      - lambda: |-
+          const uint8_t direction = event_type == "inside" || event_type == "innen" ? 1 :
+            event_type == "outside" || event_type == "aussen" ? 2 : 3;
+          const auto now = id(delivery_clock).now();
+          if (!id(opening_journal).append(direction, true, now.is_valid() ? now.timestamp : 0))
+            ESP_LOGE("delivery", "Test opening journal full or flash write failed");
+
+sensor:
+  - platform: template
+    name: Pending openings
+    entity_category: diagnostic
+    accuracy_decimals: 0
+    update_interval: 5s
+    lambda: return id(opening_journal).size();
+  - platform: template
+    name: Opening buffer overflows
+    entity_category: diagnostic
+    accuracy_decimals: 0
+    update_interval: 5s
+    lambda: return id(opening_journal).overflow();
+
+binary_sensor:
+  - platform: template
+    name: Opening storage error
+    entity_category: diagnostic
+    device_class: problem
+    lambda: return id(opening_journal).storage_error();
+
+script:
+  - id: deliver_opening
+    then:
+      - lambda: |-
+          const auto &record = id(opening_journal).front();
+          const char *direction = record.direction == 1 ? "inside" : record.direction == 2 ? "outside" : "unclear";
+          char payload[240];
+          std::snprintf(payload, sizeof(payload),
+            "{\"device\":\"%s\",\"event_id\":\"%s\",\"direction\":\"%s\",\"test\":%s,\"occurred_at\":%lu,\"attempt\":%lu}",
+            App.get_name().c_str(), id(opening_journal).front_id().c_str(), direction,
+            record.test ? "true" : "false", (unsigned long) record.timestamp,
+            (unsigned long) ++id(delivery_attempt));
+          id(pending_opening_payload).publish_state(payload);
+
+interval:
+  - interval: 2s
+    then:
+      - if:
+          condition:
+            and:
+              - api.connected:
+                  state_subscription_only: true
+              - lambda: |-
+                  return id(opening_journal).size() > 0 &&
+                    (id(delivery_last_send) == 0 ||
+                     static_cast<uint32_t>(millis() - id(delivery_last_send)) >= 10000);
+          then:
+            - lambda: id(delivery_last_send) = millis();
+            - script.execute: deliver_opening

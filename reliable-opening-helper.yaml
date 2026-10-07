@@ -1,0 +1,6 @@
+# Home Assistant configuration package (NOT an ESPHome package).
+# Persisted deduplication marker for one flap. Do not set an initial value.
+input_text:
+  smart_cat_flap_last_delivered_opening:
+    name: Smart Cat Flap last delivered opening
+    max: 40

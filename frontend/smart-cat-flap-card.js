@@ -388,7 +388,7 @@ export function translateState(value, language) {
 export function formatSensorValue(state, entity, language) {
   const raw = state?.state ?? "unknown";
   const unit = state?.attributes?.unit_of_measurement;
-  const count = /(?:openings_since_restart|oeffnungen_seit_neustart)$/.test(entity);
+  const count = /(?:openings_since_restart|oeffnungen_seit_neustart|pending_openings|opening_buffer_overflows)$/.test(entity);
   if (entity.startsWith("sensor.") && (unit || count)) {
     if (["unknown", "unavailable"].includes(raw)) return translateState(raw, language);
     if (String(raw).trim() === "" || !Number.isFinite(Number(raw)))
@@ -429,6 +429,17 @@ export function buildConfig(language, options = {}) {
     return result;
   }
   const cards = visit(TEMPLATE);
+  if (options.reliable_delivery) cards.push({
+    type: "entities", title: language === "de" ? "Stromsparen und Zustellung" : "Battery saving and delivery",
+    show_header_toggle: false,
+    entities: [
+      {entity: `switch.${prefix}_experimental_battery_saving`, name: language === "de" ? "Stromsparmodus (experimentell)" : "Battery saving (experimental)"},
+      {entity: `number.${prefix}_reporting_interval`, name: language === "de" ? "Meldeintervall" : "Reporting interval"},
+      {entity: `sensor.${prefix}_pending_openings`, name: language === "de" ? "Noch nicht bestätigte Öffnungen" : "Unacknowledged openings", type: "custom:smart-cat-flap-state-row", language},
+      {entity: `sensor.${prefix}_opening_buffer_overflows`, name: language === "de" ? "Öffnungen bei vollem Puffer" : "Openings rejected by full buffer", type: "custom:smart-cat-flap-state-row", language},
+      {entity: `binary_sensor.${prefix}_opening_storage_error`, name: language === "de" ? "Speicherfehler" : "Storage error"},
+    ],
+  });
   // Optional hardware signals stay unknown until a real measurement supplies them.
   const suffix = key => options.legacy ? (LEGACY[key] || key) : key;
   const label = (en, de) => language === "de" ? de : en;

@@ -1,0 +1,51 @@
+# Replace the existing opening notification automation; keep the legacy event
+# entities for history, but do not notify from both transports.
+alias: Smart Cat Flap - Reliable opening notification
+description: Process journal records in order; acknowledge only after successful notification.
+variables:
+  notification_language: en
+  device_name: smart-cat-flap
+triggers:
+  - trigger: state
+    entity_id: sensor.smart_cat_flap_pending_opening_payload
+actions:
+  - variables:
+      record: "{{ trigger.to_state.state | from_json({}) if trigger.to_state is not none else {} }}"
+  - condition: template
+    value_template: >-
+      {{ record.get('device') == device_name and record.get('event_id', '') != ''
+         and record.get('direction') in ['inside', 'outside', 'unclear'] }}
+  # This check runs inside the queued action, avoiding duplicate queued retries.
+  - if:
+      - condition: template
+        value_template: "{{ states('input_text.smart_cat_flap_last_delivered_opening') != record.event_id }}"
+    then:
+      - action: notify.mobile_app_your_phone
+        data:
+          title: "{{ 'TEST - ' if record.test else '' }}{{ 'Katzenklappe' if notification_language == 'de' else 'Smart Cat Flap' }}"
+          message: >-
+            {% if notification_language == 'de' %}
+              {{ 'Die Katzenklappe wurde bewegt. Richtung unklar.' if record.direction == 'unclear'
+                 else 'Die Katzenklappe wurde nach ' ~ ('innen' if record.direction == 'inside' else 'außen') ~ ' geöffnet.' }}
+              Zeitpunkt: {{ (record.occurred_at | int | timestamp_custom('%d.%m.%Y %H:%M:%S', true))
+                 if record.occurred_at | int > 0 else 'nicht verfügbar (Geräteuhr war nicht synchronisiert)' }}
+            {% else %}
+              {{ 'The cat flap moved. Direction unclear.' if record.direction == 'unclear'
+                 else 'The cat flap opened ' ~ ('inward' if record.direction == 'inside' else 'outward') ~ '.' }}
+              Time: {{ (record.occurred_at | int | timestamp_custom('%d.%m.%Y %H:%M:%S', true))
+                 if record.occurred_at | int > 0 else 'unavailable (device clock was not synchronized)' }}
+            {% endif %}
+          data:
+            tag: "cat_flap_{{ device_name }}_{{ record.event_id }}"
+            priority: high
+            ttl: 86400
+      - action: input_text.set_value
+        target:
+          entity_id: input_text.smart_cat_flap_last_delivered_opening
+        data:
+          value: "{{ record.event_id }}"
+  - action: esphome.smart_cat_flap_acknowledge_opening
+    data:
+      event_id: "{{ record.event_id }}"
+mode: queued
+max: 100

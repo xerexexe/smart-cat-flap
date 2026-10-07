@@ -5,6 +5,16 @@ globalThis.customElements = {get: () => true};
 globalThis.window = {};
 const {languageFor, translateState, buildConfig, formatSensorValue} = await import('../frontend/smart-cat-flap-card.js');
 
+test('optional delivery controls follow the profile language and preserve legacy IDs', () => {
+  const config = buildConfig('de', {legacy:true, reliable_delivery:true});
+  const card = config.cards.at(-1);
+  assert.equal(card.title, 'Stromsparen und Zustellung');
+  assert.equal(card.entities[0].entity, 'switch.katzenklappe_experimental_battery_saving');
+  assert.equal(card.entities[2].name, 'Noch nicht bestätigte Öffnungen');
+  assert.equal(formatSensorValue({state:'1.0',attributes:{}},card.entities[2].entity,'de'),'1');
+  assert.equal(buildConfig('en').cards.some(c=>c.title==='Battery saving and delivery'),false);
+});
+
 test('measurement display limits precision in both languages without changing chip IDs or invalid values', () => {
   const display = (raw, unit, language='de', entity='sensor.measurement') =>
     formatSensorValue({state:raw, attributes:{unit_of_measurement:unit}}, entity, language);

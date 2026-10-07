@@ -2,6 +2,9 @@
 
 ## Unreleased — 2026-10-07
 
+- Add optional experimental battery saving: configurable reporting (default 5 minutes), contact/USB wake-up and short light sleep; OFF after restart. Actual power savings remain unmeasured.
+- Add a persistent FIFO for 256 opening records, native-API payload delivery, matching-head acknowledgement and overflow/storage diagnostics. Provide a replacement HA notification automation with duplicate suppression and original event time.
+- Add optional localized dashboard controls with `reliable_delivery: true` and setup/limitations documentation in English and German.
 - Apply consistent dashboard precision to all numeric measurement rows: voltage (2 decimals), runtime (1), current in amperes (3), and counters/capacity/percent (0). Include test readings; preserve chip IDs, event timestamps and unknown values.
 
 ## Unreleased — 2026-10-06
