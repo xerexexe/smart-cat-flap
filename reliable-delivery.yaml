@@ -26,6 +26,7 @@ api:
             if (id(opening_journal).acknowledge(std::string(event_id.c_str()))) {
               ESP_LOGI("delivery", "Opening acknowledged; %u pending", id(opening_journal).size());
               id(delivery_last_send) = 0;
+              id(delivery_pending_count).publish_state(id(opening_journal).size());
             }
 
 time:
@@ -58,6 +59,7 @@ event:
           const auto now = id(delivery_clock).now();
           if (!id(opening_journal).append(direction, false, now.is_valid() ? now.timestamp : 0))
             ESP_LOGE("delivery", "Opening journal full or flash write failed; inspect diagnostics");
+          id(delivery_pending_count).publish_state(id(opening_journal).size());
   - id: !extend ${delivery_test_opening_id}
     on_event:
       - lambda: |-
@@ -66,9 +68,11 @@ event:
           const auto now = id(delivery_clock).now();
           if (!id(opening_journal).append(direction, true, now.is_valid() ? now.timestamp : 0))
             ESP_LOGE("delivery", "Test opening journal full or flash write failed");
+          id(delivery_pending_count).publish_state(id(opening_journal).size());
 
 sensor:
   - platform: template
+    id: delivery_pending_count
     name: Pending openings
     entity_category: diagnostic
     accuracy_decimals: 0

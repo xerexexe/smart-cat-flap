@@ -44,6 +44,9 @@ globals:
   - id: last_report_cycle
     type: uint32_t
     initial_value: '0'
+  - id: saving_ha_ready_at
+    type: uint32_t
+    initial_value: '0'
 
 number:
   - platform: template
@@ -78,6 +81,7 @@ script:
             id(radio_window_start) = millis();
             id(last_report_cycle) = millis();
             id(delivery_last_send) = 0;
+            id(saving_ha_ready_at) = 0;
           }
       - wifi.enable:
 
@@ -120,12 +124,18 @@ interval:
                 }
                 if (id(radio_awake)) {
                   const uint32_t awake_ms = now - id(radio_window_start);
-                  const bool acknowledged = id(opening_journal).size() == 0 &&
-                    esphome::api::global_api_server->is_connected_with_state_subscription();
+                  const bool subscribed = esphome::api::global_api_server->is_connected_with_state_subscription();
+                  if (subscribed && id(saving_ha_ready_at) == 0) id(saving_ha_ready_at) = now;
+                  if (!subscribed) id(saving_ha_ready_at) = 0;
+                  // A subscription starts asynchronous state delivery. Allow it to
+                  // finish before disabling Wi-Fi, even after a slow reconnect.
+                  const bool acknowledged = id(opening_journal).size() == 0 && subscribed &&
+                    uint32_t(now - id(saving_ha_ready_at)) >= 10000;
                   // Leave a connection window; failed Wi-Fi/HA attempts are bounded.
                   if ((awake_ms >= 10000 && acknowledged) || awake_ms >= 60000) {
                     id(radio_awake) = false;
                     id(last_report_cycle) = now;
+                    id(saving_ha_ready_at) = 0;
                     id(saving_wifi).disable();
                   }
                   return;

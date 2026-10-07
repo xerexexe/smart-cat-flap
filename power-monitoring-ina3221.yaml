@@ -110,7 +110,9 @@ sensor:
                 // Near-zero current is not proof of a full cell or an active charger.
                 id(pm_charging_status).publish_state(x < -0.005f ? "unknown" : "not_charging");
               }
-              if (id(pm_usb_present).has_state() && !id(pm_usb_present).state && x > 0.005f) {
+              // Include the small sleep current in the average. Filtering it out
+              // would reset the estimate between every Wi-Fi reporting window.
+              if (id(pm_usb_present).has_state() && !id(pm_usb_present).state && x >= 0.0f) {
                 id(pm_average_discharge) = id(pm_discharge_samples) == 0 ? x :
                   0.05f * x + 0.95f * id(pm_average_discharge);
                 if (id(pm_discharge_samples) < 100000) id(pm_discharge_samples)++;
@@ -128,7 +130,7 @@ sensor:
       if (!id(pm_calibrated) || !id(pm_sample_seen) ||
           static_cast<uint32_t>(millis() - id(pm_last_sample)) > 20000 ||
           !id(pm_usb_present).has_state() || id(pm_usb_present).state ||
-          id(pm_discharge_samples) < 12 || id(pm_average_discharge) <= 0.005f)
+          id(pm_discharge_samples) < 12 || id(pm_average_discharge) <= 0.0005f)
         return NAN;
       return id(pm_remaining_ah) / id(pm_average_discharge);
 
