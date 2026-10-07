@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased — 2026-10-07
+
+- Apply consistent dashboard precision to all numeric measurement rows: voltage (2 decimals), runtime (1), current in amperes (3), and counters/capacity/percent (0). Include test readings; preserve chip IDs, event timestamps and unknown values.
+
 ## Unreleased — 2026-10-06
 
 - Round dashboard voltage to two decimal places using the selected language; update English/German documentation to the installed INA3221 prototype and confirmed USB-powered charging readings.

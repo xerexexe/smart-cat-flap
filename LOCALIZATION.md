@@ -9,7 +9,7 @@ The card wraps Home Assistant's native cards and controls. It translates custom 
 ### Installation
 
 1. Copy `frontend/smart-cat-flap-card.js` to `<HA config>/www/smart-cat-flap-card.js`. Create the `www` folder if necessary.
-2. Under Settings → Dashboards → Resources, add `/local/smart-cat-flap-card.js?v=20261006-voltage` as a **JavaScript module** for current main. Update an existing resource instead of adding a second copy, then reload the dashboard. Advanced mode may be required to see Resources.
+2. Under Settings → Dashboards → Resources, add `/local/smart-cat-flap-card.js?v=20261007-numbers` as a **JavaScript module** for current main. Update an existing resource instead of adding a second copy, then reload the dashboard. Advanced mode may be required to see Resources.
 3. Create a dedicated empty dashboard and paste `dashboard-auto.yaml` into its raw configuration editor. Keep the static dashboard as a fallback if desired.
 4. Reload the browser. For updates, replace the file and change the version query in the resource URL to avoid cached code.
 5. Exit dashboard edit mode. Test controls appear only when Test mode is on.
@@ -34,6 +34,8 @@ legacy: true
 Set `language: de` or `language: en` to override automatic selection. `entity_prefix` changes the prefix only; for other custom entity IDs, adapt the source mappings. The built-in dashboard navigation title and entity names in device settings are user-defined configuration and are not dynamically translated by this card. The automatic dashboard uses a neutral cat icon for its view title.
 
 ## Templates without a custom card
+
+Numeric measurement rows use consistent precision in German and English: voltage 2 decimals, runtime 1 decimal, current in amperes 3 decimals, and counters/capacity/percent no decimals. Other measured units use at most 2 decimals. Unknown/invalid measurements stay unknown; chip IDs and event timestamps are not treated as measurements. Rounding affects the display only, leaving measurement calculations unchanged. Native editable number controls and static cards retain Home Assistant's own formatting.
 
 - `dashboard.yaml`: fixed English labels.
 - `dashboard.de.yaml`: fixed German labels with the **same English firmware entity IDs**. This file alone does not translate text states supplied by the firmware.

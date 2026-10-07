@@ -3,7 +3,25 @@ import test from 'node:test';
 globalThis.HTMLElement = class {};
 globalThis.customElements = {get: () => true};
 globalThis.window = {};
-const {languageFor, translateState, buildConfig} = await import('../frontend/smart-cat-flap-card.js');
+const {languageFor, translateState, buildConfig, formatSensorValue} = await import('../frontend/smart-cat-flap-card.js');
+
+test('measurement display limits precision in both languages without changing chip IDs or invalid values', () => {
+  const display = (raw, unit, language='de', entity='sensor.measurement') =>
+    formatSensorValue({state:raw, attributes:{unit_of_measurement:unit}}, entity, language);
+  assert.equal(display('40.0715637207031','h'),'40,1 h');
+  assert.equal(display('40.0715637207031','h','en'),'40.1 h');
+  assert.equal(display('3.70864009857178','V'),'3,71 V');
+  assert.equal(display('3.7','V','en'),'3.70 V');
+  assert.equal(display('0.027999999','A'),'0,028 A');
+  assert.equal(display('2000.0001','mAh','en'),'2,000 mAh');
+  assert.equal(display('79.999999','%'),'80 %');
+  assert.equal(display('12.0',undefined,'de','sensor.katzenklappe_testoeffnungen_seit_neustart'),'12');
+  for (const raw of ['NaN','Infinity','']) assert.equal(display(raw,'h'),'Unbekannt');
+  assert.equal(display('unknown','V'),'Unbekannt');
+  assert.equal(display('unavailable','h','en'),'Unavailable');
+  assert.equal(display('000123456789012',undefined,'de','text.cat_chip_id'),'000123456789012');
+  assert.equal(display('2026-10-07T15:20:00Z',undefined,'en','event.opening'),'2026-10-07T15:20:00Z');
+});
 
 test('profile language wins; German regions work and unsupported languages fall back to English', () => {
   assert.equal(languageFor({locale:{language:'de-CH'},language:'en'}),'de');

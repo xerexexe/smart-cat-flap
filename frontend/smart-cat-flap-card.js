@@ -384,6 +384,25 @@ export function translateState(value, language) {
   return entry ? entry[language === "de" ? 1 : 0] : String(value ?? "");
 }
 
+// Display precision belongs here: ESPHome accuracy_decimals does not round HA's raw state.
+export function formatSensorValue(state, entity, language) {
+  const raw = state?.state ?? "unknown";
+  const unit = state?.attributes?.unit_of_measurement;
+  const count = /(?:openings_since_restart|oeffnungen_seit_neustart)$/.test(entity);
+  if (entity.startsWith("sensor.") && (unit || count)) {
+    if (["unknown", "unavailable"].includes(raw)) return translateState(raw, language);
+    if (String(raw).trim() === "" || !Number.isFinite(Number(raw)))
+      return translateState("unknown", language);
+    const precision = count ? 0 : ({V: 2, A: 3, mA: 0, h: 1, mAh: 0, "%": 0, W: 2})[unit];
+    const value = new Intl.NumberFormat(language, {
+      minimumFractionDigits: precision ?? 0,
+      maximumFractionDigits: precision ?? 2,
+    }).format(Number(raw));
+    return unit ? `${value} ${unit}` : value;
+  }
+  return translateState(raw, language);
+}
+
 export function buildConfig(language, options = {}) {
   const prefix = options.entity_prefix || (options.legacy ? "katzenklappe" : "smart_cat_flap");
   if (!/^[a-z0-9_]+$/.test(prefix)) throw new Error("Invalid entity_prefix");
@@ -403,7 +422,7 @@ export function buildConfig(language, options = {}) {
     // Text states are supplied by firmware, so localize their display in a custom read-only row.
     // Condition states and the underlying hass state object must remain untouched.
     if (result.entity && !result.type && (result.entity.startsWith("event.") ||
-        /(?:last_opening_direction|last_test_direction|rfid_match|rfid_test_status|battery_test_status|letzte_oeffnungsrichtung|letzte_testrichtung|rfid_zuordnung|rfid_teststatus|akku_teststatus)$/.test(result.entity))) {
+        /(?:last_opening_direction|last_test_direction|rfid_match|rfid_test_status|battery_test_status|letzte_oeffnungsrichtung|letzte_testrichtung|rfid_zuordnung|rfid_teststatus|akku_teststatus|openings_since_restart|oeffnungen_seit_neustart|battery_test_reading|akku_testmesswert)$/.test(result.entity))) {
       result.type = "custom:smart-cat-flap-state-row";
       result.language = language;
     }
@@ -461,15 +480,9 @@ class SmartCatFlapStateRow extends HTMLElement {
     if (!this._config) return;
     const language = languageFor(hass, this._config.language || "auto");
     const state = hass.states[this._config.entity];
-    let value = translateState(state?.state || (this._config.missing_is_unknown ? "unknown" : "unavailable"), language);
-    if (state?.attributes.unit_of_measurement === "V" &&
-        state.state.trim() !== "" && Number.isFinite(Number(state.state))) {
-      value = new Intl.NumberFormat(language, {
-        minimumFractionDigits: 2, maximumFractionDigits: 2,
-      }).format(Number(state.state));
-    }
-    if (state && !["unknown", "unavailable"].includes(state.state) && state.attributes.unit_of_measurement)
-      value += ` ${state.attributes.unit_of_measurement}`;
+    let value = formatSensorValue(state || {
+      state: this._config.missing_is_unknown ? "unknown" : "unavailable",
+    }, this._config.entity, language);
     if (this._config.entity.startsWith("event.") && state && !["unknown", "unavailable"].includes(state.state)) {
       const date = new Date(state.state);
       const type = translateState(state.attributes.event_type || "unknown", language);
