@@ -6,7 +6,7 @@
 
 Eine vorhandene Katzenklappe im Fliegengitter mit einem **Seeed Studio XIAO ESP32-C6**, ESPHome und Home Assistant erweitern. Zwei Reedkontakte erfassen die Schwenkrichtung. Home Assistant meldet Öffnungen auf dem Handy. Ein Testmodus ermöglicht Tests der Erkennung, Meldungen und späteren Erweiterungen.
 
-**Aktueller Aufbau · 07.10.2026:** Akku, Reedkontakte und schwarzer INA3221 sind angeschlossen (SDA D5/GPIO23, SCL D4/GPIO22; Adresse `0x40`). Akkubetrieb und Voll-Akku-Kalibrierung wurden geprüft. Dauer-WLAN ergibt nur wenige Tage geschätzte Laufzeit. Die optionale [Erweiterung für Stromsparen und gepufferte Zustellung](BATTERY-SAVING.de.md) ergänzt ein einstellbares 5-Minuten-Meldeintervall und einen dauerhaften Öffnungspuffer. Stromsparen ist experimentell und standardmäßig AUS; Aufwachen mit echten Kontakten und tatsächliche Akkulaufzeit müssen noch gemessen werden. Rahmenmontage und Tierchip-Erkennung stehen aus. Stand im `main`-Branch; letzter Release-Tag weiterhin `v0.1.0-beta.3`.
+**Aktueller Aufbau · 08.10.2026:** Akku, Reedkontakte und schwarzer INA3221 sind angeschlossen (SDA D5/GPIO23, SCL D4/GPIO22; Adresse `0x40`). Akkubetrieb und Voll-Akku-Kalibrierung wurden geprüft. Dauer-WLAN ergibt nur wenige Tage geschätzte Laufzeit. Die optionale [Erweiterung für Stromsparen und gepufferte Zustellung](BATTERY-SAVING.de.md) ergänzt ein einstellbares 5-Minuten-Meldeintervall und einen dauerhaften Öffnungspuffer. Stromsparen ist experimentell und standardmäßig AUS; eine echte Kontaktöffnung hat das Gerät geweckt und eine Meldung ausgelöst; die tatsächliche Akkulaufzeit muss noch gemessen werden. Rahmenmontage und Tierchip-Erkennung stehen aus. Stand im `main`-Branch; letzter Release-Tag weiterhin `v0.1.0-beta.3`.
 
 <details>
 <summary>Kleiner Projektverlauf – was wir bisher gemacht haben</summary>
@@ -23,7 +23,8 @@ Eine vorhandene Katzenklappe im Fliegengitter mit einem **Seeed Studio XIAO ESP3
 - Spannungsanzeige auf zwei Nachkommastellen gerundet; das Dezimalzeichen folgt der gewählten Sprache.
 - Nach Nachlöten der Masseverbindung Akkubetrieb geprüft und den vollen Akku zur Laufzeitschätzung bestätigt.
 - Dauer-WLAN braucht zu viel Strom: regelmäßige Meldungen und einen Flash-Puffer mit Bestätigung durch Home Assistant ergänzt.
-- Als Nächstes: Aufwachen mit echten Kontakten testen, Verbrauch messen und Rahmenmontage. Tierchip-Leser bleibt zurückgestellt.
+- Echte Kontaktmeldung im Stromsparmodus bestätigt und Meldezeit korrigiert, damit Schlafzeit mitzählt.
+- Als Nächstes: regelmäßige Meldungen prüfen, Verbrauch messen und Rahmenmontage. Tierchip-Leser bleibt zurückgestellt.
 
 </details>
 

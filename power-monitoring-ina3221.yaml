@@ -88,7 +88,7 @@ sensor:
                 id(pm_invalidate).execute();
                 return;
               }
-              const uint32_t now = millis();
+              const uint32_t now = static_cast<uint32_t>(esphome::millis_64());
               const uint32_t elapsed = now - id(pm_last_sample);
               if (id(pm_sample_seen) && elapsed > 20000) id(pm_calibrated) = false;
               if (id(pm_calibrated) && id(pm_sample_seen) && elapsed <= 20000) {
@@ -128,7 +128,7 @@ sensor:
     update_interval: 5s
     lambda: |-
       if (!id(pm_calibrated) || !id(pm_sample_seen) ||
-          static_cast<uint32_t>(millis() - id(pm_last_sample)) > 20000 ||
+          static_cast<uint32_t>(static_cast<uint32_t>(esphome::millis_64()) - id(pm_last_sample)) > 20000 ||
           !id(pm_usb_present).has_state() || id(pm_usb_present).state ||
           id(pm_discharge_samples) < 12 || id(pm_average_discharge) <= 0.0005f)
         return NAN;
@@ -141,7 +141,7 @@ button:
     on_press:
       - lambda: |-
           // User must first observe charge completion. Voltage alone is not enough.
-          if (!id(pm_sample_seen) || static_cast<uint32_t>(millis() - id(pm_last_sample)) > 20000 ||
+          if (!id(pm_sample_seen) || static_cast<uint32_t>(static_cast<uint32_t>(esphome::millis_64()) - id(pm_last_sample)) > 20000 ||
               !id(pm_usb_present).has_state() || !id(pm_usb_present).state ||
               !std::isfinite(id(pm_battery_current).state) ||
               std::fabs(id(pm_battery_current).state) > 0.010f ||
@@ -171,5 +171,5 @@ interval:
   - interval: 5s
     then:
       - lambda: |-
-          if (!id(pm_sample_seen) || static_cast<uint32_t>(millis() - id(pm_last_sample)) > 20000)
+          if (!id(pm_sample_seen) || static_cast<uint32_t>(static_cast<uint32_t>(esphome::millis_64()) - id(pm_last_sample)) > 20000)
             id(pm_invalidate).execute();

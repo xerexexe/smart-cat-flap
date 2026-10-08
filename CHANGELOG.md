@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased — 2026-10-08
+
+- Use the sleep-aware ESP timer for reporting, delivery retry deadlines and battery-current integration. ESPHome 2026.9.1's `millis()` uses FreeRTOS ticks, which can lag behind elapsed time during manual light sleep.
+- Log radio-off deadlines and reporting-window starts to diagnose real reporting intervals.
+
 ## Unreleased — 2026-10-07
 
 - Allow state delivery after HA reconnects, publish pending counts immediately after acknowledgement, and include small discharge currents in runtime averaging.

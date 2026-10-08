@@ -6,7 +6,7 @@
 
 Add opening detection and Home Assistant notifications to an existing cat flap in a fly screen using a **Seeed Studio XIAO ESP32-C6** and ESPHome. Two reed contacts detect which way the flap swings. Test mode exercises detection, notifications and future extensions.
 
-**Current prototype · 2026-10-07:** Battery, reed contacts and the black INA3221 are connected (SDA D5/GPIO23, SCL D4/GPIO22; address `0x40`). Battery operation and full-battery calibration were checked. Continuous Wi-Fi gives only a few days of estimated runtime. The optional [battery-saving and reliable-delivery extension](BATTERY-SAVING.md) adds a configurable 5-minute reporting cycle and a persistent opening journal. Saving is experimental and OFF by default; physical wake-up and actual battery-life measurements remain pending. Frame mounting and microchip identification are still pending. This is `main`; the latest published release tag remains `v0.1.0-beta.3`.
+**Current prototype · 2026-10-08:** Battery, reed contacts and the black INA3221 are connected (SDA D5/GPIO23, SCL D4/GPIO22; address `0x40`). Battery operation and full-battery calibration were checked. Continuous Wi-Fi gives only a few days of estimated runtime. The optional [battery-saving and reliable-delivery extension](BATTERY-SAVING.md) adds a configurable 5-minute reporting cycle and a persistent opening journal. Saving is experimental and OFF by default; a real contact successfully woke the device and delivered a notification; actual battery-life measurements remain pending. Frame mounting and microchip identification are still pending. This is `main`; the latest published release tag remains `v0.1.0-beta.3`.
 
 <details>
 <summary>Short project diary – what we have done so far</summary>
@@ -23,7 +23,8 @@ Add opening detection and Home Assistant notifications to an existing cat flap i
 - Rounded dashboard voltage readings to two decimal places, with the decimal separator following the selected language.
 - Checked battery operation after repairing the ground joint; confirmed the full-battery calibration.
 - Found continuous Wi-Fi runtime too short; added experimental periodic reporting and a flash-backed opening buffer with Home Assistant acknowledgement.
-- Next: test waking with real contacts, measure consumption and mount the prototype in the frame. Animal microchip reader remains deferred.
+- Confirmed a real contact notification in battery-saving mode and corrected reporting timing to include time spent asleep.
+- Next: verify regular reporting, measure consumption and mount the prototype in the frame. Animal microchip reader remains deferred.
 
 </details>
 

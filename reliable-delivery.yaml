@@ -117,7 +117,7 @@ interval:
               - lambda: |-
                   return id(opening_journal).size() > 0 &&
                     (id(delivery_last_send) == 0 ||
-                     static_cast<uint32_t>(millis() - id(delivery_last_send)) >= 10000);
+                     static_cast<uint32_t>(static_cast<uint32_t>(esphome::millis_64()) - id(delivery_last_send)) >= 10000);
           then:
-            - lambda: id(delivery_last_send) = millis();
+            - lambda: id(delivery_last_send) = static_cast<uint32_t>(esphome::millis_64());
             - script.execute: deliver_opening

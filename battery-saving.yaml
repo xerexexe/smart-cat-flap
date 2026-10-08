@@ -17,8 +17,8 @@ esphome:
     priority: -100
     then:
       - lambda: |-
-          id(radio_window_start) = millis();
-          id(last_report_cycle) = millis();
+          id(radio_window_start) = static_cast<uint32_t>(esphome::millis_64());
+          id(last_report_cycle) = static_cast<uint32_t>(esphome::millis_64());
 
 wifi:
   id: saving_wifi
@@ -77,9 +77,10 @@ script:
     then:
       - lambda: |-
           if (!id(radio_awake)) {
+            ESP_LOGI("saving", "Starting reporting window at %llu ms", (unsigned long long) esphome::millis_64());
             id(radio_awake) = true;
-            id(radio_window_start) = millis();
-            id(last_report_cycle) = millis();
+            id(radio_window_start) = static_cast<uint32_t>(esphome::millis_64());
+            id(last_report_cycle) = static_cast<uint32_t>(esphome::millis_64());
             id(delivery_last_send) = 0;
             id(saving_ha_ready_at) = 0;
           }
@@ -109,7 +110,7 @@ interval:
                   - script.execute: wake_radio
           else:
             - lambda: |-
-                const uint32_t now = millis();
+                const uint32_t now = static_cast<uint32_t>(esphome::millis_64());
                 const uint32_t period = uint32_t(id(reporting_minutes).state) * 60000UL;
                 // Never sleep with an active raw contact or unfinished detection.
                 const bool quiet = gpio_get_level(GPIO_NUM_0) && gpio_get_level(GPIO_NUM_1) &&
@@ -133,6 +134,8 @@ interval:
                     uint32_t(now - id(saving_ha_ready_at)) >= 10000;
                   // Leave a connection window; failed Wi-Fi/HA attempts are bounded.
                   if ((awake_ms >= 10000 && acknowledged) || awake_ms >= 60000) {
+                    ESP_LOGI("saving", "Radio off; next report in %.0f minutes at %llu ms", id(reporting_minutes).state,
+                      (unsigned long long) (esphome::millis_64() + period));
                     id(radio_awake) = false;
                     id(last_report_cycle) = now;
                     id(saving_ha_ready_at) = 0;
