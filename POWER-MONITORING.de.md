@@ -120,9 +120,13 @@ Die Bestätigung wird nur mit frischen Messungen, USB, ≥4,10 V und höchstens
 10 mA Strombetrag angenommen. Unter **Usable battery capacity** stehen zunächst
 2000 mAh; das ist die Nennkapazität, kein gemessener Wert.
 Nach Abziehen von USB erscheint die Schätzung frühestens nach einer Minute
-Entladung. Nach Neustart, Kapazitätsänderung oder einer Messlücke über 20 Sekunden
-ist eine neue Voll-Bestätigung erforderlich. Während USB angeschlossen ist bleibt
-die Restzeit unbekannt. Fehlende Messungen werden nach spätestens etwa 25 Sekunden
+Entladung. Mit USB verwendet die Anzeige den zuletzt gelernten Verbrauch im
+Akkubetrieb; der USB-Strom ersetzt diesen Mittelwert nicht. Kalibrierung,
+Restladung und gelernter Verbrauch bleiben nach Neustarts erhalten. Nach einer
+Kapazitätsänderung oder einer Messlücke über 20 Sekunden ist eine neue
+Voll-Bestätigung erforderlich. Nach längerem stromlosen Lagern erneut voll
+bestätigen, da Selbstentladung nicht gemessen wird. Beim ersten Wechsel von der
+alten Firmware mit flüchtiger Kalibrierung ist einmal neu voll zu bestätigen. Fehlende Messungen werden nach spätestens etwa 25 Sekunden
 unbekannt statt als aktuelle Werte angezeigt.
 
 ## Erster Funktionstest

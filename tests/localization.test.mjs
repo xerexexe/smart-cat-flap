@@ -3,7 +3,16 @@ import test from 'node:test';
 globalThis.HTMLElement = class {};
 globalThis.customElements = {get: () => true};
 globalThis.window = {};
-const {languageFor, translateState, buildConfig, formatSensorValue} = await import('../frontend/smart-cat-flap-card.js');
+const {languageFor, translateState, buildConfig, formatSensorValue, reportedState} = await import('../frontend/smart-cat-flap-card.js');
+
+test('sleeping devices retain reported battery values but explicit unknown readings replace them', () => {
+  const old = {state:'240.5', last_updated:'2026-10-08T16:00:00Z', attributes:{unit_of_measurement:'h'}};
+  assert.deepEqual(reportedState({state:'unavailable'}, old), {state:old, retained:true});
+  assert.deepEqual(reportedState({state:'unknown'}, old), {state:{state:'unknown'}, retained:false});
+  assert.equal(reportedState({state:'unavailable'}).retained, false);
+  assert.equal(buildConfig('en', {reliable_delivery:true}).cards[1].entities[3].retain_last_report, true);
+  assert.equal(buildConfig('en').cards[1].entities[3].retain_last_report, false);
+});
 
 test('optional delivery controls follow the profile language and preserve legacy IDs', () => {
   const config = buildConfig('de', {legacy:true, reliable_delivery:true});

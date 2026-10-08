@@ -47,6 +47,9 @@ globals:
   - id: saving_ha_ready_at
     type: uint32_t
     initial_value: '0'
+  - id: saving_last_power_poll
+    type: uint32_t
+    initial_value: '0'
 
 number:
   - platform: template
@@ -97,6 +100,17 @@ event:
 interval:
   - interval: 20ms
     then:
+      - lambda: |-
+          // ESPHome's normal polling timers follow RTOS ticks. During manual
+          // sleep, explicitly keep the INA measurement cadence on elapsed time.
+          #ifdef USE_INA3221
+          const uint32_t power_now = static_cast<uint32_t>(esphome::millis_64());
+          if (!id(radio_awake) && uint32_t(power_now - id(saving_last_power_poll)) >= 5000) {
+            id(saving_last_power_poll) = power_now;
+            id(pm_ina3221).update();
+            id(pm_estimated_runtime).update();
+          }
+          #endif
       - if:
           condition:
             lambda: |-

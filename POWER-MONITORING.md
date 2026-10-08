@@ -123,9 +123,13 @@ capacity** initially uses 2000 mAh, the nominal capacity, not a measured value.
 After removing USB, the estimate appears after at least one minute of discharge.
 Current samples estimate remaining charge; brief Wi-Fi peaks, ageing, temperature
 and capacity errors can substantially affect the result. This is not guaranteed
-runtime or a precision fuel gauge. Runtime stays unknown with USB connected.
-Restart, capacity changes or measurement gaps over 20 seconds require a new full
-confirmation. Missing measurements clear voltage, warning, charging and runtime
+runtime or a precision fuel gauge. With USB connected, the estimate uses the
+last learned battery-mode consumption; USB current does not replace that average.
+Calibration, remaining charge and learned consumption now survive restarts.
+Capacity changes or measurement gaps over 20 seconds require a new full
+confirmation. After a long period with the board unpowered, confirm full again;
+offline battery self-discharge cannot be measured. On first upgrade from the
+older volatile calibration, one new full confirmation is required. Missing measurements clear voltage, warning, charging and runtime
 within approximately 25 seconds, rather than leaving stale values visible.
 
 ### First hardware checks
@@ -146,7 +150,7 @@ Component reference: [ESPHome INA219](https://esphome.io/components/sensor/ina21
 | `sensor.*_battery_voltage` | Voltage in V, or unknown/unavailable | INA219 bus plus signed shunt voltage |
 | `sensor.*_power_source` | `usb`, `battery`, or `unknown` | Verified USB-presence measurement |
 | `sensor.*_charging_status` | `charging`, `discharging`, `not_charging`, or `unknown` | Signed battery current and USB detection; no automatic full indication |
-| `sensor.*_estimated_runtime` | Estimate in hours, or unknown/unavailable | Measured consumption and a calibrated usable-capacity estimate; clear the estimate while charging or when inputs are invalid |
+| `sensor.*_estimated_runtime` | Estimate in hours, or unknown/unavailable | Measured consumption and a calibrated usable-capacity estimate; retain the battery-mode forecast on USB; clear it when inputs are invalid |
 | `binary_sensor.*_battery_low` | on/off or unknown/unavailable | Validated real battery voltage; existing simulated warning remains separate |
 
 Replace `*` with the configured prefix. Legacy German firmware uses

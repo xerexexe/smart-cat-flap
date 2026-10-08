@@ -24,7 +24,8 @@ Eine vorhandene Katzenklappe im Fliegengitter mit einem **Seeed Studio XIAO ESP3
 - Nach Nachlöten der Masseverbindung Akkubetrieb geprüft und den vollen Akku zur Laufzeitschätzung bestätigt.
 - Dauer-WLAN braucht zu viel Strom: regelmäßige Meldungen und einen Flash-Puffer mit Bestätigung durch Home Assistant ergänzt.
 - Echte Kontaktmeldung im Stromsparmodus bestätigt und Meldezeit korrigiert, damit Schlafzeit mitzählt.
-- Als Nächstes: regelmäßige Meldungen prüfen, Verbrauch messen und Rahmenmontage. Tierchip-Leser bleibt zurückgestellt.
+- Fünf-Minuten-Meldung geprüft; Laufzeitprognose bei USB erhalten, Kalibrierung gespeichert und letzte Akkuwerte während Funkpausen gekennzeichnet.
+- Als Nächstes: Verbrauch messen und Rahmenmontage. Tierchip-Leser bleibt zurückgestellt.
 
 </details>
 
@@ -127,7 +128,7 @@ Die zwei Richtungskontakte liefern keinen zuverlässigen dauerhaft offenen/gesch
 
 ## Akkuanzeige und spätere RFID-Erweiterung
 
-Der geschützte 3,7-V-/2000-mAh-Akku ist angeschlossen; die Verbindung funktioniert ohne USB. Laden erfolgt über den XIAO. Die [INA3221-/USB-Messschaltung](INA3221.de.md) liefert Spannung und Strom mit Richtung. Die Restlaufzeit verwendet einen bestätigten vollen Akku und gemessenen Entladestrom; sie bleibt eine Schätzung und die Kalibrierung wird bei Neustarts zurückgesetzt. Die Firmware bietet keinen Hardware-Tiefentladeschutz. Der Nutzen des [experimentellen Stromsparmodus](BATTERY-SAVING.de.md) muss am echten Aufbau gemessen werden.
+Der geschützte 3,7-V-/2000-mAh-Akku ist angeschlossen; die Verbindung funktioniert ohne USB. Laden erfolgt über den XIAO. Die [INA3221-/USB-Messschaltung](INA3221.de.md) liefert Spannung und Strom mit Richtung. Die Restlaufzeit verwendet einen bestätigten vollen Akku und gemessenen Entladestrom; sie bleibt eine Schätzung und Kalibrierung und gelernter Verbrauch bleiben nach Neustarts erhalten. Die Prognose bleibt mit USB sichtbar; in Funkpausen kennzeichnet die Karte zuletzt übertragene Werte mit ihrer Uhrzeit. Die Firmware bietet keinen Hardware-Tiefentladeschutz. Der Nutzen des [experimentellen Stromsparmodus](BATTERY-SAVING.de.md) muss am echten Aufbau gemessen werden.
 
 Für implantierte Tierchips ist ein zum tatsächlichen Chip passender Leser erforderlich. FDX-B mit 134,2 kHz ist die bisherige Planungsannahme. Eine passive Antennenspule allein an GPIOs ersetzt kein Lesemodul. Leser, Antennenabstimmung, Pegel und Protokoll sind noch festzulegen; es ist kein erfundener UART-Treiber enthalten.
 

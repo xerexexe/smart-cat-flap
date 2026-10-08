@@ -72,3 +72,5 @@ References: [custom cards](https://developers.home-assistant.io/docs/frontend/cu
 ## Optional reliable delivery controls
 
 After installing `reliable-delivery.yaml` and `battery-saving.yaml`, add `reliable_delivery: true` to the custom card configuration. It adds localized battery-saving controls and journal diagnostics; leave it absent for devices without these packages. See [setup](BATTERY-SAVING.md) / [Deutsch](BATTERY-SAVING.de.md).
+
+During radio pauses, battery readings remain visible with an **As of** / **Stand** timestamp. This browser stores only those reported readings locally; explicit unknown measurements replace old values. After updating the card file, change its resource URL's version query and reload the dashboard to avoid an older cached script.

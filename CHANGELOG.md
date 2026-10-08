@@ -2,6 +2,10 @@
 
 ## Unreleased — 2026-10-08
 
+- Preserve learned battery-mode consumption on USB and show its runtime forecast while externally powered. Persist INA3221 calibration, remaining charge and learned consumption across restarts.
+- Poll INA3221 measurements on elapsed time while manually sleeping to prevent false stale-measurement invalidation.
+- Retain timestamped battery readings in the localized dashboard during Wi-Fi pauses; explicit unknown readings still replace earlier values.
+
 - Use the sleep-aware ESP timer for reporting, delivery retry deadlines and battery-current integration. ESPHome 2026.9.1's `millis()` uses FreeRTOS ticks, which can lag behind elapsed time during manual light sleep.
 - Log radio-off deadlines and reporting-window starts to diagnose real reporting intervals.
 

@@ -452,7 +452,7 @@ export function buildConfig(language, options = {}) {
       ["estimated_runtime", label("Estimated time remaining", "Geschätzte Restlaufzeit")],
     ].map(([key, name]) => ({
       type: "custom:smart-cat-flap-state-row", entity: `sensor.${prefix}_${suffix(key)}`,
-      name, language, missing_is_unknown: true,
+      name, language, missing_is_unknown: true, retain_last_report: Boolean(options.reliable_delivery),
     })),
   };
   cards[1].entities.push({
@@ -460,6 +460,13 @@ export function buildConfig(language, options = {}) {
     name: label("Battery low", "Akku niedrig"), language, missing_is_unknown: true,
   });
   return {type: "vertical-stack", cards};
+}
+
+export function reportedState(current, previous) {
+  if (current && current.state !== "unavailable") {
+    return {state: current, retained: false};
+  }
+  return {state: previous || current, retained: Boolean(previous)};
 }
 
 class SmartCatFlapStateRow extends HTMLElement {
@@ -483,6 +490,14 @@ class SmartCatFlapStateRow extends HTMLElement {
   setConfig(config) {
     if (!config.entity) throw new Error("An entity is required");
     this._config = config;
+    this._lastReport = undefined;
+    if (config.retain_last_report) {
+      try {
+        const saved = JSON.parse(localStorage.getItem(`smart-cat-flap-report:v1:${config.entity}`));
+        if (saved && typeof saved.state === "string" && saved.last_updated && saved.attributes)
+          this._lastReport = saved;
+      } catch (_) { /* Storage may be disabled by the browser. */ }
+    }
     this._label.textContent = config.name || config.entity;
     if (this._hass) this.hass = this._hass;
   }
@@ -490,7 +505,18 @@ class SmartCatFlapStateRow extends HTMLElement {
     this._hass = hass;
     if (!this._config) return;
     const language = languageFor(hass, this._config.language || "auto");
-    const state = hass.states[this._config.entity];
+    const current = hass.states[this._config.entity];
+    if (this._config.retain_last_report && current && current.state !== "unavailable") {
+      const saved = {state: current.state, last_updated: current.last_updated,
+        attributes: {unit_of_measurement: current.attributes?.unit_of_measurement}};
+      if (JSON.stringify(saved) !== JSON.stringify(this._lastReport)) {
+        this._lastReport = saved;
+        try { localStorage.setItem(`smart-cat-flap-report:v1:${this._config.entity}`, JSON.stringify(saved)); }
+        catch (_) { /* Still retain the reading in memory. */ }
+      }
+    }
+    const displayed = this._config.retain_last_report ? reportedState(current, this._lastReport) : {state: current};
+    const state = displayed.state;
     let value = formatSensorValue(state || {
       state: this._config.missing_is_unknown ? "unknown" : "unavailable",
     }, this._config.entity, language);
@@ -498,6 +524,11 @@ class SmartCatFlapStateRow extends HTMLElement {
       const date = new Date(state.state);
       const type = translateState(state.attributes.event_type || "unknown", language);
       value = Number.isNaN(date.valueOf()) ? type : `${date.toLocaleString(language)} · ${type}`;
+    }
+    if (displayed.retained) {
+      const date = new Date(state.last_updated);
+      const stamp = Number.isNaN(date.valueOf()) ? "" : date.toLocaleTimeString(language);
+      value += ` · ${language === "de" ? "Stand" : "As of"} ${stamp}`;
     }
     this._value.textContent = value;
   }

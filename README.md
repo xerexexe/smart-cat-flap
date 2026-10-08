@@ -22,6 +22,7 @@ Add opening detection and Home Assistant notifications to an existing cat flap i
 - Connected the INA3221, adapted SDA/SCL in firmware without resoldering and confirmed the first USB-powered voltage/current readings and charging status.
 - Rounded dashboard voltage readings to two decimal places, with the decimal separator following the selected language.
 - Checked battery operation after repairing the ground joint; confirmed the full-battery calibration.
+- Kept the battery-mode runtime forecast on USB, saved calibration across restarts, and labelled retained battery readings during radio pauses.
 - Found continuous Wi-Fi runtime too short; added experimental periodic reporting and a flash-backed opening buffer with Home Assistant acknowledgement.
 - Confirmed a real contact notification in battery-saving mode and corrected reporting timing to include time spent asleep.
 - Next: verify regular reporting, measure consumption and mount the prototype in the frame. Animal microchip reader remains deferred.
@@ -127,7 +128,7 @@ Two direction contacts do not provide a reliable persistent open/closed state. N
 
 ## Battery monitoring and future RFID work
 
-The protected 3.7 V / 2000 mAh battery is connected; Home Assistant connectivity works without USB. The XIAO charges it over USB. The installed [INA3221/USB circuit](INA3221.md) supplies voltage and signed current. Runtime uses a user-confirmed full battery and sampled discharge current; it remains approximate and calibration resets on restart. Firmware provides no hardware discharge protection. [Experimental battery saving](BATTERY-SAVING.md) requires testing and consumption measurements before its benefit can be stated.
+The protected 3.7 V / 2000 mAh battery is connected; Home Assistant connectivity works without USB. The XIAO charges it over USB. The installed [INA3221/USB circuit](INA3221.md) supplies voltage and signed current. Runtime uses a user-confirmed full battery and sampled discharge current; it remains approximate and calibration and learned battery consumption survive restarts. The forecast remains visible on USB; the card labels retained readings during Wi-Fi pauses with their timestamp. Firmware provides no hardware discharge protection. [Experimental battery saving](BATTERY-SAVING.md) requires testing and consumption measurements before its benefit can be stated.
 
 An implanted animal microchip requires a reader compatible with the actual chip. FDX-B at 134.2 kHz is the current planning assumption. A passive antenna coil connected to GPIO pins does not replace a reader. Reader choice, antenna tuning, voltage levels and protocol remain to be determined; no speculative UART decoder is included.
 
