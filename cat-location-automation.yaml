@@ -1,0 +1,31 @@
+# Optional HA automation; not an ESPHome package. Shares the dashboard location helper.
+alias: Smart Cat Flap - Estimated cat location
+description: Infer one cat's location from new real openings; preserve newer manual corrections.
+variables:
+  device_name: smart-cat-flap
+  location_entity: input_text.smart_cat_flap_cat_location
+triggers:
+  - trigger: state
+    entity_id: sensor.smart_cat_flap_pending_opening_payload
+actions:
+  - variables:
+      record: "{{ trigger.to_state.state | from_json({}) if trigger.to_state is not none else {} }}"
+  - condition: template
+    value_template: >-
+      {{ record is mapping and record.get('device') == device_name
+         and record.get('event_id', '') != '' and not record.get('test', true)
+         and record.get('direction') in ['inside', 'outside', 'unclear']
+         and record.get('occurred_at', 0) | float(0) > 0 }}
+  - condition: template
+    value_template: >-
+      {% set previous = states(location_entity) | from_json({}) %}
+      {{ record.occurred_at | float(0) > (previous.get('at', 0) | float(0) if previous is mapping else 0) }}
+  - action: input_text.set_value
+    target:
+      entity_id: "{{ location_entity }}"
+    data:
+      value: >-
+        {{ dict(location=record.direction if record.direction in ['inside','outside'] else 'unknown',
+                source='opening', at=record.occurred_at | float(0)) | to_json }}
+mode: queued
+max: 100

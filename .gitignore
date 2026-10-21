@@ -9,3 +9,4 @@ work/
 *.log
 .vscode/
 __pycache__/
+cat_flap_battery_history.sqlite*

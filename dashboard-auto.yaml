@@ -4,7 +4,7 @@ views:
   - title: "🐈"
     path: flap
     icon: mdi:cat
-    type: masonry
+    type: panel
     cards:
       - type: custom:smart-cat-flap-card
         language: auto

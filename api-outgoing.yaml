@@ -1,0 +1,8 @@
+# Optional ESPHome 2026.10 package. Not supported by ESPHome 2026.9.1.
+# Merge with your existing encrypted api configuration; keep its key unchanged.
+# Home Assistant 2026.10+ accepts authenticated callbacks on TCP port 6054.
+api:
+  outgoing_connection:
+    # Keep the attempt within the short daytime reporting window.
+    delay: 5s
+    # No host: learn and remember the address advertised by Home Assistant.

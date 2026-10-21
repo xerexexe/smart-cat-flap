@@ -1,5 +1,7 @@
 # Battery and power monitoring
 
+For the installed **INA3221**, use the [current reference-retention rules](INA3221.md#saved-full-reference-and-measurement-gaps): measurement gaps retain the saved reference and mark estimates uncertain. The older INA219 package below still uses its original invalidation behavior.
+
 > **INA3221 prototype:** The installed black module now uses `power-monitoring-ina3221.yaml`. Use [INA3221 setup](INA3221.md) instead of the INA219-specific terminal map below; the seller diagrams are inconsistent; the INA3221 guide records actual wiring and confirmed charging readings.
 
 The automatic dashboard now reserves rows for battery voltage, power source,

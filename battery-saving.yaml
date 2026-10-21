@@ -1,5 +1,8 @@
 # Experimental, OFF by default. Requires reliable-delivery.yaml and USB detection.
 # GPIO0/1 are the existing active-low contacts; GPIO21 is USB detection.
+packages:
+  night_rest: !include night-rest.yaml
+
 substitutions:
   saving_ready_id: ready
   saving_pending_id: pending_direction
@@ -109,12 +112,14 @@ interval:
             id(saving_last_power_poll) = power_now;
             id(pm_ina3221).update();
             id(pm_estimated_runtime).update();
+            id(pm_history_report).update();
           }
           #endif
       - if:
           condition:
             lambda: |-
               return !id(battery_saving).state || id(${saving_test_mode_id}).state ||
+                id(night_prepare_at) != 0 ||
                 !id(pm_usb_present).has_state() || id(pm_usb_present).state;
           then:
             - if:

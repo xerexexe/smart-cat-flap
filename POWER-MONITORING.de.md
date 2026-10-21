@@ -1,5 +1,7 @@
 # Akku- und USB-Messung
 
+Für den eingebauten **INA3221** gelten die [aktuellen Regeln zum gespeicherten Vollpunkt](INA3221.de.md#gespeicherter-vollpunkt-und-messlücken): Messlücken erhalten den Vollpunkt und kennzeichnen die Schätzung als unsicher. Das ältere INA219-Paket unten verwendet weiterhin seine ursprüngliche Fehlerbehandlung.
+
 > **INA3221-Prototyp:** Für das angeschlossene schwarze Modul gibt es `power-monitoring-ina3221.yaml`. Dafür die [INA3221-Anleitung](INA3221.de.md) verwenden, nicht die INA219-Anschlussbelegung unten. Die Händlerbilder widersprechen sich; die INA3221-Anleitung dokumentiert die tatsächliche Verdrahtung und die bestätigten Lademesswerte.
 
 [English](POWER-MONITORING.md) | **Deutsch**

@@ -1,0 +1,110 @@
+# Included by battery-saving.yaml. True deep sleep: no contact wake-up at night.
+substitutions:
+  saving_timezone: Europe/Berlin
+
+esphome:
+  includes:
+    - night-schedule.h
+  on_boot:
+    priority: -100
+    then:
+      - lambda: |-
+          if (esp_sleep_get_wakeup_cause() == ESP_SLEEP_WAKEUP_TIMER &&
+              id(night_saving_was_enabled)) id(battery_saving).turn_on();
+
+time:
+  - id: !extend delivery_clock
+    timezone: ${saving_timezone}
+
+deep_sleep:
+  id: night_deep_sleep
+  # No run_duration: only the guarded action below may start deep sleep.
+
+globals:
+  - id: night_saving_was_enabled
+    type: bool
+    restore_value: true
+    initial_value: 'false'
+  - id: night_prepare_at
+    type: uint32_t
+    initial_value: '0'
+  - id: night_duration_ms
+    type: uint32_t
+    initial_value: '0'
+
+switch:
+  - platform: template
+    id: night_rest_enabled
+    name: Night rest
+    icon: mdi:weather-night
+    entity_category: config
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_OFF
+    turn_off_action:
+      - lambda: id(night_prepare_at) = 0;
+      - script.execute: wake_radio
+
+number:
+  - platform: template
+    id: night_start_hour
+    name: Night rest start hour
+    entity_category: config
+    min_value: 0
+    max_value: 23
+    step: 1
+    initial_value: 22
+    restore_value: true
+    optimistic: true
+    mode: box
+  - platform: template
+    id: night_end_hour
+    name: Night rest end hour
+    entity_category: config
+    min_value: 0
+    max_value: 23
+    step: 1
+    initial_value: 6
+    restore_value: true
+    optimistic: true
+    mode: box
+
+interval:
+  - interval: 1s
+    then:
+      - lambda: |-
+          const auto clock = id(delivery_clock).now();
+          const bool eligible = id(night_rest_enabled).state && clock.is_valid() &&
+            !id(${saving_test_mode_id}).state && id(pm_usb_present).has_state() &&
+            !id(pm_usb_present).state &&
+            cat_flap::night_hour(clock.hour, unsigned(id(night_start_hour).state),
+              unsigned(id(night_end_hour).state));
+          id(night_duration_ms) = 0;
+          if (!eligible) { id(night_prepare_at) = 0; return; }
+          const uint32_t elapsed = static_cast<uint32_t>(esphome::millis_64());
+          if (id(night_prepare_at) == 0) {
+            id(night_prepare_at) = elapsed ? elapsed : 1;
+            id(wake_radio).execute();
+            ESP_LOGI("night", "Night rest requested; allowing 60 seconds for delivery/maintenance");
+            return;
+          }
+          // Also provides a recovery window after a manual reset during the night.
+          if (uint32_t(elapsed - id(night_prepare_at)) < 60000) return;
+          if (!id(${saving_ready_id}) || id(${saving_pending_id}) != 0 ||
+              !gpio_get_level(GPIO_NUM_0) || !gpio_get_level(GPIO_NUM_1)) return;
+          // Unacknowledged records may remain, but must be safely on flash.
+          if (!id(opening_journal).persist()) {
+            ESP_LOGE("night", "Storage failed; staying awake instead of deep sleeping");
+            id(night_prepare_at) = elapsed;
+            return;
+          }
+          id(night_duration_ms) = cat_flap::night_sleep_ms(clock.timestamp,
+            unsigned(id(night_end_hour).state));
+      - if:
+          condition:
+            lambda: return id(night_duration_ms) > 0;
+          then:
+            - lambda: id(night_saving_was_enabled) = id(battery_saving).state;
+            - logger.log: "Night rest: detection and radio off until the scheduled end"
+            - deep_sleep.enter:
+                id: night_deep_sleep
+                sleep_duration: !lambda return id(night_duration_ms);

@@ -4,6 +4,8 @@ Diese optionale Erweiterung schaltet WLAN zwischen Meldungen ab und nutzt kurze 
 
 ## Einrichten
 
+Die optionale [Nachtruhe](NIGHT-REST.de.md) ist enthalten, zunächst aus (22–6 Uhr). Zusätzlich `night-rest.yaml` und `night-schedule.h` neben `battery-saving.yaml` kopieren. Nachts entfallen Erkennung und Berichte; USB allein weckt den Tiefschlaf nicht auf.
+
 `event-journal.h`, `reliable-delivery.yaml` und `battery-saving.yaml` neben die Geräte-YAML kopieren. Voraussetzung sind die vorhandene USB-Erkennung an GPIO21 und die aktiven LOW-Kontakte an GPIO0/1. Falls der Device Builder die Paket-YAMLs als eigene Geräte anzeigt, einen Unterordner verwenden und die Include-Pfade anpassen. Header und Zustellungspaket müssen im selben Ordner liegen.
 
 In den vorhandenen `packages:`-Abschnitt aufnehmen; keinen zweiten Abschnitt anlegen:
@@ -63,3 +65,5 @@ Am Prototyp geprüft am 07.10.2026: ESPHome-2026.9.1-Build und Pufferprüfungen 
 Die vorhandene Restlaufzeit integriert Strom-Messwerte und benötigt eine bestätigte volle Batterie. Kalibrierung und gelernter Akkuverbrauch überstehen Neustarts; mit USB bleibt die Prognose für Akkubetrieb erhalten. Regeln für Kalibrierung und ungültige Messungen stehen in [POWER-MONITORING.de.md](POWER-MONITORING.de.md). Der Mittelwert berücksichtigt auch kleine und stromlose Entlade-Messwerte; bei durchschnittlich höchstens 0,5 mA bleibt die Restlaufzeit unbekannt. Seltene INA-Messungen können kurze WLAN-Stromspitzen übersehen; die Laufzeit bleibt eine Schätzung. Frühere Rechenbeispiele mit angenommenen Strömen sind keine Messwerte dieser Umsetzung.
 
 Weitere Prüfung am 08.10.2026: Restlaufzeit im Akkubetrieb berechnet, nach vollständiger Fünf-Minuten-Funkpause weiterhin gültig und nach Wiederanschließen von USB sichtbar. Das Dashboard behielt gekennzeichnete Akkuwerte während der Trennung und nach Neuladen. Acht Sprach-/Anzeigetests und der gemeinsame Firmware-Build erfolgreich. Ein vollständiger Entladetest und eine gezielte Prüfung der Kalibrierungswiederherstellung nach Neustart stehen noch aus.
+
+Prüfung am 19.10.2026 nach Korrektur der XIAO-Antenneninitialisierung: Im Akkubetrieb kam das reguläre Fünf-Minuten-Meldefenster mit gültiger Versorgungs- und Strommessung; anschließend protokollierte der ESP das Abschalten des Funks für weitere fünf Minuten. USB wurde danach ohne Tastendruck erkannt. Bei weiterhin eingeschaltetem Stromsparschalter blieben USB, Ladestrom und API-Antworten über 60 Sekunden gültig. Das bestätigt den USB-Vorrang im Tagesbetrieb; das Aufwecken aus der nächtlichen Tiefschlafphase wurde damit nicht geprüft. Die durch den vorherigen Messausfall ungültige Akkukalibrierung bleibt unbekannt.

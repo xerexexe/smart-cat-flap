@@ -1,5 +1,9 @@
 # Beta: two reed contacts and test mode. Use USB power during development.
+packages:
+  xiao_radio: !include xiao-esp32c6-radio.yaml
+
 esphome:
+  min_version: 2026.10.0
   name: smart-cat-flap
   friendly_name: Smart Cat Flap
 
@@ -11,6 +15,8 @@ esp32:
 logger:
 
 api:
+  outgoing_connection:
+    delay: 5s
   encryption:
     key: !secret api_encryption_key
 
@@ -337,6 +343,12 @@ number:
     mode: box
 
 button:
+  - platform: template
+    name: Check WiFi access point
+    entity_category: diagnostic
+    icon: mdi:access-point-network
+    on_press:
+      - wifi.roam:
   - platform: template
     name: Test read chip
     on_press:

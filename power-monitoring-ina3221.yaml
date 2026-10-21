@@ -1,3 +1,9 @@
+esphome:
+  on_boot:
+    priority: -90
+    then:
+      - lambda: id(pm_history_boot)++;
+
 # Optional INA3221 package. Physical module wiring must be verified before installation.
 # Safe to preload without the module: battery measurements remain unknown.
 # Reboot after connecting the module; ESPHome initializes I2C sensors at startup.
@@ -20,6 +26,36 @@ i2c:
   frequency: 100kHz
 
 globals:
+  - id: pm_history_boot
+    type: uint32_t
+    restore_value: true
+    initial_value: '0'
+  - id: pm_history_discharge_mah
+    type: double
+    restore_value: true
+    initial_value: '0.0'
+  - id: pm_history_charge_mah
+    type: double
+    restore_value: true
+    initial_value: '0.0'
+  - id: pm_history_battery_seconds
+    type: double
+    restore_value: true
+    initial_value: '0.0'
+  - id: pm_history_usb_seconds
+    type: double
+    restore_value: true
+    initial_value: '0.0'
+  - id: pm_history_gap_count
+    type: uint32_t
+    restore_value: true
+    initial_value: '0'
+  - id: pm_history_last_usb
+    type: bool
+    initial_value: 'false'
+  - id: pm_history_usb_seen
+    type: bool
+    initial_value: 'false'
   - id: pm_sample_seen
     type: bool
     initial_value: 'false'
@@ -30,6 +66,10 @@ globals:
     type: bool
     restore_value: true
     initial_value: 'false'
+  # Every boot starts conservatively: charge during downtime was not measured.
+  - id: pm_estimate_uncertain
+    type: bool
+    initial_value: 'true'
   - id: pm_remaining_ah
     type: float
     restore_value: true
@@ -48,6 +88,29 @@ globals:
     initial_value: '0'
 
 text_sensor:
+  - platform: template
+    id: pm_history_report
+    name: Battery history report
+    entity_category: diagnostic
+    update_interval: 5s
+    lambda: |-
+      if (!id(pm_sample_seen)) return {"unknown"};
+      return str_sprintf("{\"v\":1,\"b\":%u,\"d\":%.4f,\"c\":%.4f,\"s\":%.3f,\"u\":%.3f,\"g\":%u,\"t\":%.3f}",
+        unsigned(id(pm_history_boot)), id(pm_history_discharge_mah), id(pm_history_charge_mah),
+        id(pm_history_battery_seconds), id(pm_history_usb_seconds), unsigned(id(pm_history_gap_count)),
+        esphome::millis_64() / 1000.0);
+  - platform: template
+    id: pm_estimate_quality
+    name: Battery estimate quality
+    entity_category: diagnostic
+    update_interval: 5s
+    lambda: |-
+      if (!id(pm_calibrated)) return {"uncalibrated"};
+      if (!id(pm_sample_seen) ||
+          static_cast<uint32_t>(static_cast<uint32_t>(esphome::millis_64()) - id(pm_last_sample)) > 20000)
+        return {"measurement_unavailable"};
+      return {id(pm_estimate_uncertain) ? "uncertain" : "calibrated"};
+
   - platform: template
     id: pm_charging_status
     name: Charging status
@@ -101,7 +164,24 @@ sensor:
               }
               const uint32_t now = static_cast<uint32_t>(esphome::millis_64());
               const uint32_t elapsed = now - id(pm_last_sample);
-              if (id(pm_sample_seen) && elapsed > 20000) id(pm_calibrated) = false;
+              // Persistent cumulative counters bridge radio pauses without sampling bias in HA.
+              // Unmeasured gaps and USB transitions are excluded, never treated as zero load.
+              if (id(pm_sample_seen) && elapsed > 20000) id(pm_history_gap_count)++;
+              const bool usb_known = id(pm_usb_present).has_state();
+              const bool usb_now = usb_known && id(pm_usb_present).state;
+              if (id(pm_sample_seen) && elapsed <= 20000 && usb_known &&
+                  id(pm_history_usb_seen) && usb_now == id(pm_history_last_usb)) {
+                const double seconds = elapsed / 1000.0;
+                if (usb_now) id(pm_history_usb_seconds) += seconds;
+                else {
+                  id(pm_history_battery_seconds) += seconds;
+                  id(pm_history_discharge_mah) += std::max(0.0f, x) * seconds / 3.6;
+                }
+                id(pm_history_charge_mah) += std::max(0.0f, -x) * seconds / 3.6;
+              }
+              id(pm_history_last_usb) = usb_now;
+              id(pm_history_usb_seen) = usb_known;
+              if (id(pm_sample_seen) && elapsed > 20000) id(pm_estimate_uncertain) = true;
               if (id(pm_calibrated) && id(pm_sample_seen) && elapsed <= 20000) {
                 // Approximate charge integration; brief Wi-Fi current peaks can be missed.
                 const float used_ah = x * (elapsed / 3600000.0f);
@@ -129,18 +209,30 @@ sensor:
                 if (id(pm_discharge_samples) < 100000) id(pm_discharge_samples)++;
               }
   - platform: template
+    id: pm_estimated_battery_level
+    name: Estimated battery level
+    device_class: battery
+    state_class: measurement
+    unit_of_measurement: '%'
+    accuracy_decimals: 0
+    update_interval: 5s
+    lambda: |-
+      const float capacity = id(pm_usable_capacity).state / 1000.0f;
+      if (!id(pm_calibrated) || !id(pm_sample_seen) ||
+          static_cast<uint32_t>(static_cast<uint32_t>(esphome::millis_64()) - id(pm_last_sample)) > 20000 ||
+          !std::isfinite(capacity) || capacity <= 0.0f || !std::isfinite(id(pm_remaining_ah)))
+        return NAN;
+      return std::max(0.0f, std::min(100.0f, 100.0f * id(pm_remaining_ah) / capacity));
+  - platform: template
     id: pm_estimated_runtime
     name: Estimated runtime
     unit_of_measurement: h
     accuracy_decimals: 1
     update_interval: 5s
     lambda: |-
-      if (!id(pm_calibrated) || !id(pm_sample_seen) ||
-          static_cast<uint32_t>(static_cast<uint32_t>(esphome::millis_64()) - id(pm_last_sample)) > 20000 ||
-          !id(pm_usb_present).has_state() ||
-          id(pm_discharge_samples) < 12 || id(pm_average_discharge) <= 0.0005f)
-        return NAN;
-      return id(pm_remaining_ah) / id(pm_average_discharge);
+      // Forecast is now learned from 30-day SQLite history in Home Assistant.
+      // Do not expose the old short-window current average as remaining runtime.
+      return NAN;
 
 button:
   - platform: template
@@ -159,21 +251,28 @@ button:
           }
           id(pm_remaining_ah) = id(pm_usable_capacity).state / 1000.0f;
           id(pm_calibrated) = true;
+          id(pm_estimate_uncertain) = false;
           ESP_LOGI("power_monitor", "Runtime estimate calibrated from user-confirmed full battery");
+      - delay: 2s
+      - lambda: |-
+          if (!global_preferences->sync())
+            ESP_LOGW("power_monitor", "Could not flush saved battery reference to flash");
 
 script:
   - id: pm_invalidate
     then:
       - lambda: |-
+          // Invalidate live readings, never erase the saved full reference or learned load.
+          // The unmeasured interval is skipped; subsequent estimates explicitly warn about it.
           id(pm_sample_seen) = false;
-          id(pm_calibrated) = false;
-          id(pm_discharge_samples) = 0;
+          id(pm_estimate_uncertain) = true;
           id(${pm_voltage_id}).publish_state(NAN);
           // Guard against re-entering this script through the current on_value callback.
           if (std::isfinite(id(pm_battery_current).state)) id(pm_battery_current).publish_state(NAN);
           id(${pm_warning_id}).invalidate_state();
           id(pm_charging_status).publish_state("unknown");
           id(pm_estimated_runtime).publish_state(NAN);
+          id(pm_estimated_battery_level).publish_state(NAN);
 
 interval:
   - interval: 5s

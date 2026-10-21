@@ -1,0 +1,12 @@
+# Seeed Studio XIAO ESP32-C6 only. Both outputs must start LOW:
+# GPIO3 enables RF-switch power; GPIO14 selects the built-in ceramic antenna.
+# GPIOBinaryOutput initializes LOW at hardware priority 800, before Wi-Fi (250).
+# Do not invert GPIO3: that would initially disable RF-switch power.
+# https://wiki.seeedstudio.com/xiao_esp32c6_getting_started/#hardware-overview
+output:
+  - platform: gpio
+    id: xiao_rf_power_disable
+    pin: GPIO3
+  - platform: gpio
+    id: xiao_external_antenna
+    pin: GPIO14

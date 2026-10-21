@@ -1,5 +1,57 @@
 # Changelog
 
+## Unreleased — 2026-10-21
+
+- Replace the short-window runtime forecast with optional local SQLite battery history in Home Assistant: rolling 30-day learning, daily/weekly groups, persistent device consumption counters across radio pauses, explicit reset/night gaps and localized dashboard learning progress. Keep the full-battery calibration.
+
+- Add an on-demand Wi-Fi access-point check under diagnostics using wifi.roam; keep automatic repeated scans out of the battery reporting loop.
+
+- Upgrade to stable ESPHome 2026.10.0 and enable encrypted outgoing API connections with a five-second fallback delay for short reporting windows. Home Assistant 2026.10 or later is required for outgoing connections.
+
+## Unreleased — 2026-10-19
+
+- Include estimated runtime in the compact home overview tile and retain its last report during radio pauses.
+
+- Display estimated battery runtime of at least 24 hours as days and whole hours throughout the dashboard, localized in English and German; keep shorter estimates in hours.
+
+- Show battery current in mA, estimated charge, configured capacity and estimate quality under Power & device. Explain charging/discharging signs and include physical reed contacts in diagnostics.
+
+- Preserve INA3221 full-battery reference, remaining charge and learned load across measurement failures; mark resumed estimates uncertain after gaps/restarts. Keep live readings unknown during faults, flush full confirmations to flash and show estimate quality in both dashboard sizes.
+
+- Initialize the XIAO ESP32-C6 RF-switch power and built-in antenna selection at hardware setup priority, before Wi-Fi starts. Keep this board-specific configuration in a separate package.
+- Animate the cat with breathing, blinking and tail motion; add an outside tree and colour only a thin strip at the top of the status tile by battery level, keeping cat/control accents turquoise.
+- Fix photo loading while HA prepares cards before DOM attachment. Normalize doubled media-path separators, avoid a trailing slash in the upload destination, and show the shared cat photo in the compact title too.
+
+
+- Keep battery waves moving during discharge and radio pauses at the last valid reported fill level. Colour the battery green above 50%, orange from 10% through 50% and red below 10%; retain reduced-motion support.
+
+
+## Unreleased — 2026-10-18
+
+- Enlarge the compact cat/flap illustration into the available space between location controls and the battery, using a taller flap graphic.
+
+
+- Add shared, persisted estimated cat location with manual inside/outside/unknown corrections and a small cat/flap graphic in both dashboard sizes. Ignore tests and older replayed records; preserve measured direction history.
+
+
+- Add a compact home overview card with flap status, direction and calibrated battery waves; retain timestamped battery readings during radio pauses.
+
+
+- Replace the looping fill with two gentle charging waves at the calibrated estimated charge level. Expose INA3221 remaining charge as a battery percentage; unknown calibration stays unknown.
+- Add direct photo selection on phones and PCs, automatic resizing/metadata removal and authenticated upload to Home Assistant media.
+
+
+- Redesign the complete responsive dashboard with an illustrated status header, flap activity, energy and expandable settings/diagnostics.
+- Add an optional shared cat photo for the dashboard and reliable opening pushes; keep the original delivery acknowledgement and duplicate suppression.
+- Animate the battery filling while a connected device reports charging. Honour reduced motion; stop animation for retained/offline readings. The animation does not represent measured charge percentage.
+
+
+- Replace the plain night-rest rows with a dedicated localized card: 24-hour graphic, current-time marker, clock selectors, USB/offline guidance and expandable explanations. Verify a start-time change updates the live schedule/duration, then restore 22:00–06:00.
+
+- Add optional night rest, initially OFF, with persisted enable/start/end controls (default 22:00–06:00 Europe/Berlin). Timer deep sleep omits overnight detection/reports and retains pending events in flash.
+- Add localized controls and document reset recovery, external electronics remaining powered and unmeasured overnight consumption. Hardware verification remains pending.
+- Build from the backed-up installed prototype configuration, install via encrypted OTA and verify OFF/22/6 through the API and HA dashboard. Restore prior daytime saving ON; actual overnight wake-up testing remains pending.
+
 ## Unreleased — 2026-10-08
 
 - Preserve learned battery-mode consumption on USB and show its runtime forecast while externally powered. Persist INA3221 calibration, remaining charge and learned consumption across restarts.

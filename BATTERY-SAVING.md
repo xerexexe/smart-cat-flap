@@ -4,6 +4,8 @@ This optional extension turns Wi-Fi off between reports and uses short light-sle
 
 ## Installation
 
+Optional [night rest](NIGHT-REST.md) is included, OFF by default (22:00–06:00). Also copy `night-rest.yaml` and `night-schedule.h` beside `battery-saving.yaml`. Night rest disables overnight detection/reports; USB alone cannot wake it after entry.
+
 Copy `event-journal.h`, `reliable-delivery.yaml` and `battery-saving.yaml` beside the device configuration. The saving package requires the existing USB detection circuit on GPIO21 and active-low contacts on GPIO0/1. Keep auxiliary YAML files in a subfolder if your Device Builder lists them as separate devices, and adjust include paths accordingly. The header must stay beside `reliable-delivery.yaml`.
 
 Merge these packages with existing packages (including the INA3221 monitor), without adding a second `packages:` key:
@@ -63,3 +65,5 @@ Prototype checks on 2026-10-07: combined ESPHome 2026.9.1 build and journal comp
 The existing runtime estimate integrates sampled battery current and requires a user-confirmed full battery. Calibration and learned battery consumption survive restarts; a USB connection preserves the battery-mode forecast. See [calibration and invalidation rules](POWER-MONITORING.md). Its average includes small and zero discharge readings; an average of 0.5 mA or less leaves runtime unknown. Sparse INA samples can miss short Wi-Fi current peaks; runtime remains approximate. Earlier example lifetimes based on assumed active/sleep currents are not measurements of this implementation.
 
 Further prototype checks on 2026-10-08: runtime became numeric on battery, remained valid after a complete five-minute radio pause, and remained visible on reconnecting USB. The dashboard retained timestamped battery readings during disconnection and after a browser reload. Eight localization/display tests and the combined firmware build passed. A full discharge test and a controlled calibration-restoration test across restart remain pending.
+
+Verified on 2026-10-19 after correcting XIAO antenna initialization: the regular five-minute battery reporting window delivered valid supply and current readings, followed by an explicit radio-off log for another five minutes. Reconnecting USB required no button press. With battery saving still enabled, USB supply, charging current and API responses remained valid throughout a 60-second check. This verifies daytime USB override, not waking from nighttime deep sleep. Battery calibration invalidated by the earlier measurement outage remains unknown.

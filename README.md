@@ -6,7 +6,9 @@
 
 Add opening detection and Home Assistant notifications to an existing cat flap in a fly screen using a **Seeed Studio XIAO ESP32-C6** and ESPHome. Two reed contacts detect which way the flap swings. Test mode exercises detection, notifications and future extensions.
 
-**Current prototype · 2026-10-08:** Battery, reed contacts and the black INA3221 are connected (SDA D5/GPIO23, SCL D4/GPIO22; address `0x40`). Battery operation and full-battery calibration were checked. Continuous Wi-Fi gives only a few days of estimated runtime. The optional [battery-saving and reliable-delivery extension](BATTERY-SAVING.md) adds a configurable 5-minute reporting cycle and a persistent opening journal. Saving is experimental and OFF by default; a real contact successfully woke the device and delivered a notification; actual battery-life measurements remain pending. Frame mounting and microchip identification are still pending. This is `main`; the latest published release tag remains `v0.1.0-beta.3`.
+**Current prototype · 2026-10-21:** Battery, reed contacts and the black INA3221 are connected (SDA D5/GPIO23, SCL D4/GPIO22; address `0x40`). Stable ESPHome 2026.10.0, encrypted outgoing API connections and the five-minute [battery-saving/reporting cycle](BATTERY-SAVING.md) have been checked on the prototype. The responsive dashboard includes cat photos, animated battery status, manual cat-location corrections and optional night rest. The new local battery history is recording; its 30-day learning period and real-world runtime validation are still pending. Frame mounting and microchip identification remain unfinished. This is beta development on `main`; the latest published release tag remains `v0.1.0-beta.3`.
+
+The optional [local battery history](BATTERY-HISTORY.md) learns consumption over a rolling 30-day window and replaces the short-window runtime forecast. Missing night measurements remain visible.
 
 <details>
 <summary>Short project diary – what we have done so far</summary>
@@ -25,11 +27,14 @@ Add opening detection and Home Assistant notifications to an existing cat flap i
 - Kept the battery-mode runtime forecast on USB, saved calibration across restarts, and labelled retained battery readings during radio pauses.
 - Found continuous Wi-Fi runtime too short; added experimental periodic reporting and a flash-backed opening buffer with Home Assistant acknowledgement.
 - Confirmed a real contact notification in battery-saving mode and corrected reporting timing to include time spent asleep.
-- Next: verify regular reporting, measure consumption and mount the prototype in the frame. Animal microchip reader remains deferred.
+- Added optional night rest, cat photos, a compact overview tile, battery waves and manual cat-location corrections.
+- Updated to stable ESPHome 2026.10.0, verified outgoing encrypted connections and improved the built-in antenna setup.
+- Replaced the short-window runtime forecast with local SQLite history, rolling 30-day learning and explicit measurement gaps; verified consumption delivery after a radio pause.
+- Next: collect long-term battery data and mount the prototype in the frame. Animal microchip reading remains unfinished.
 
 </details>
 
-The original firmware was built and tested with **ESPHome 2026.9.1** on a real XIAO ESP32-C6. This release translates the examples into English and preserves their detection logic. Mechanical installation tests are still pending. Flap direction alone does not prove that a cat has completed a passage.
+Current firmware examples require **ESPHome 2026.10.0 or newer**. The installed prototype was built and checked with 2026.10.0 on a real XIAO ESP32-C6; the original version used 2026.9.1. Mechanical installation tests are still pending. Flap direction alone does not prove that a cat has completed a passage.
 
 The flap used for this project is the **NAMSAN screen-door cat flap, size S, black** (outer frame 25 × 31.5 cm; inner opening 21 × 24.5 cm, according to the listing). Sensor mounting on this flap is still pending.
 
@@ -87,8 +92,8 @@ The current main branch keeps separate opening notifications with their event ti
 
 ## Setup
 
-1. Use ESPHome 2026.9.1. Home Assistant must support ESPHome event/text entities and the current automation syntax.
-2. Copy `cat-flap.yaml` into your ESPHome configuration directory. For an existing device, preserve its device name, Wi-Fi, API and OTA settings when merging changes. Changing a device name can change its Home Assistant registration.
+1. Use ESPHome 2026.10.0 or newer and Home Assistant 2026.10 or newer. The device can open its own encrypted API connection to Home Assistant after a five-second fallback delay; keep API encryption enabled. The diagnostic “Check WiFi access point” button can look for a significantly stronger access point on the same network when needed; a switch may briefly interrupt the connection.
+2. Copy `cat-flap.yaml` and `xiao-esp32c6-radio.yaml` into your ESPHome configuration directory. The radio package powers the XIAO antenna switch and selects its built-in antenna before Wi-Fi starts; it is specific to the Seeed XIAO ESP32-C6. For an existing device, preserve its device name, Wi-Fi, API and OTA settings when merging changes. Changing a device name can change its Home Assistant registration.
 3. Copy `secrets.example.yaml` to a **local** `secrets.yaml` and replace every placeholder. Generate a valid ESPHome API encryption key; the template deliberately contains no usable key. Never commit the resulting secrets file.
 4. Validate and compile with ESPHome, then perform the first installation over USB. The example enables encrypted API communication and encrypted ESPHome OTA updates. Your ESPHome and installed firmware must support this OTA feature.
 5. Add the device using Home Assistant's ESPHome integration.

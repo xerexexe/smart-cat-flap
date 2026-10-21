@@ -5,6 +5,7 @@ description: Process journal records in order; acknowledge only after successful
 variables:
   notification_language: en
   device_name: smart-cat-flap
+  cat_photo_entity: input_text.smart_cat_flap_cat_photo
 triggers:
   - trigger: state
     entity_id: sensor.smart_cat_flap_pending_opening_payload
@@ -35,10 +36,12 @@ actions:
               Time: {{ (record.occurred_at | int | timestamp_custom('%d.%m.%Y %H:%M:%S', true))
                  if record.occurred_at | int > 0 else 'unavailable (device clock was not synchronized)' }}
             {% endif %}
-          data:
-            tag: "cat_flap_{{ device_name }}_{{ record.event_id }}"
-            priority: high
-            ttl: 86400
+          data: >-
+            {%- set base = dict(tag='cat_flap_' ~ device_name ~ '_' ~ record.event_id,
+                               priority='high', ttl=86400) -%}
+            {%- set photo = states(cat_photo_entity) | trim -%}
+            {{ dict(base, image=photo) if photo.startswith('/media/local/') or
+               photo.startswith('/local/') or photo.startswith('https://') else base }}
       - action: input_text.set_value
         target:
           entity_id: input_text.smart_cat_flap_last_delivered_opening
