@@ -1,0 +1,64 @@
+# Home Assistant automation: persist a full desired schedule in the input_text helper.
+# For legacy firmware replace smart_cat_flap with katzenklappe ONLY in the three
+# device entity IDs below. Keep the shared input_text helper ID unchanged.
+alias: Smart Cat Flap - Apply queued night schedule
+description: Apply the latest requested hours on reconnect; clear only after matching device reports.
+mode: restart
+triggers:
+  - trigger: state
+    entity_id: input_text.smart_cat_flap_night_schedule_request
+  - trigger: state
+    entity_id: binary_sensor.smart_cat_flap_connection
+    to: "on"
+  - trigger: time_pattern
+    minutes: "/1"
+  - trigger: homeassistant
+    event: start
+conditions:
+  - condition: state
+    entity_id: binary_sensor.smart_cat_flap_connection
+    state: "on"
+  - condition: template
+    value_template: >-
+      {% set r = states('input_text.smart_cat_flap_night_schedule_request') | from_json({}) %}
+      {{ r is mapping and r.get('start') is integer and r.get('end') is integer
+         and r.get('start') in range(24) and r.get('end') in range(24)
+         and r.get('revision') is string and r.get('revision') | length > 0 }}
+actions:
+  # A connection-status report can arrive before the encrypted API is ready.
+  - delay: "00:00:02"
+  - condition: state
+    entity_id: binary_sensor.smart_cat_flap_connection
+    state: "on"
+  - variables:
+      queued: "{{ states('input_text.smart_cat_flap_night_schedule_request') }}"
+      request: "{{ queued | from_json({}) }}"
+  - condition: template
+    value_template: >-
+      {{ request is mapping and request.get('start') is integer and request.get('end') is integer
+         and request.get('start') in range(24) and request.get('end') in range(24)
+         and request.get('revision') is string and request.get('revision') | length > 0 }}
+  - action: number.set_value
+    target:
+      entity_id: number.smart_cat_flap_night_rest_start_hour
+    data:
+      value: "{{ request.start }}"
+  - action: number.set_value
+    target:
+      entity_id: number.smart_cat_flap_night_rest_end_hour
+    data:
+      value: "{{ request.end }}"
+  - wait_template: >-
+      {{ is_state('binary_sensor.smart_cat_flap_connection', 'on')
+         and states('number.smart_cat_flap_night_rest_start_hour') | float(-1) == request.start
+         and states('number.smart_cat_flap_night_rest_end_hour') | float(-1) == request.end }}
+    timeout: "00:00:10"
+    continue_on_timeout: false
+  # A newer request made during transfer must never be cleared by this run.
+  - condition: template
+    value_template: "{{ states('input_text.smart_cat_flap_night_schedule_request') == queued }}"
+  - action: input_text.set_value
+    target:
+      entity_id: input_text.smart_cat_flap_night_schedule_request
+    data:
+      value: ""

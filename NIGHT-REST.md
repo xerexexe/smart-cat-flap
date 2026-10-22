@@ -6,7 +6,15 @@ Included with `battery-saving.yaml`. Copy `night-rest.yaml` and `night-schedule.
 
 The dedicated **Night rest** card displays a 24-hour schedule: gold for detection, purple for scheduled rest, and a marker for the current local time. Choose whole hours using **Rest starts** / **Detection resumes** and enable the schedule with the top switch. Disabled schedules are labelled as previews. USB/Test-mode and offline guidance are separate; expandable details explain the behavior.
 
-Current resource: `/local/smart-cat-flap-card.js?v=20261018-night-graphic2`. Set the dashboard's `night_timezone` to match any firmware timezone override. During radio pauses, last reported settings remain visible and unavailable controls are disabled. The graphic describes a schedule, not confirmed physical sleep.
+Current resource: `/local/smart-cat-flap-card.js?v=20261022-night-queue2`. Set the dashboard's `night_timezone` to match any firmware timezone override. The card uses the same rounded corners and border as the other dashboard panels. The graphic describes a schedule, not confirmed physical sleep.
+
+## Edit hours while offline
+
+Add `input_text.smart_cat_flap_night_schedule_request` from `reliable-opening-helper.yaml` (maximum 255 characters, no `initial`, so requests survive restarts), then import `night-schedule-automation.yaml` into Home Assistant. For legacy firmware, change the three device entity IDs to `binary_sensor.katzenklappe_verbindung`, `number.katzenklappe_night_rest_start_hour` and `number.katzenklappe_night_rest_end_hour`. Keep the helper ID unchanged; do not create a duplicate UI helper if the YAML helper already exists.
+
+The time selectors remain usable with night rest enabled and during radio pauses. Home Assistant persists the desired hours; the card distinguishes the **queued schedule** from the **last confirmed** hours. Only matching reports for both hours from a connected ESP clear the request. New edits replace older requests; completion of an older transfer cannot clear a newer request. Failed transfers remain queued and retry on reconnect or the minute-based check.
+
+Requests work across browsers and while the browser is closed. They do not wake the sleeping device: editing the end hour overnight cannot change the already-running wake timer. Transfer happens after the actual wake-up. The enable/disable switch still requires a device connection. Without the helper and automation, direct editing remains available while connected. To use a different helper, set `night_schedule_request_entity` on the dashboard card and update the automation accordingly.
 
 - **Night rest** defaults OFF on first installation and remembers your choice. Start/end hours default to **22 / 6**, with an exclusive end. Equal hours disable the window; daytime windows also work.
 - Default timezone: **Europe/Berlin**, including DST. Override `saving_timezone` elsewhere. Without a valid clock the ESP stays awake.

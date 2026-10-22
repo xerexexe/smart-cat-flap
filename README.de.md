@@ -30,6 +30,7 @@ Die optionale [lokale Akkuhistorie](BATTERY-HISTORY.de.md) lernt den Verbrauch a
 - Optionale Nachtruhe, Katzenfotos, kompakte Übersichtskachel, Akkuwellen und manuelle Aufenthaltskorrektur ergänzt.
 - Auf die stabile ESPHome-Version 2026.10.0 aktualisiert, ausgehende verschlüsselte Verbindungen geprüft und die eingebaute Antenne korrekt eingerichtet.
 - Kurzfristige Laufzeitprognose durch lokale SQLite-Historie mit fortlaufendem 30-Tage-Lernen und gekennzeichneten Messlücken ersetzt; Verbrauchsübertragung nach Funkpause geprüft.
+- Nachtruhekachel abgerundet und dauerhafte Vormerkung geänderter Zeiten mit Übertragung beim Wiederverbinden ergänzt.
 - Als Nächstes: Langzeitdaten sammeln und Rahmenmontage. Tierchip-Erkennung bleibt offen.
 
 </details>

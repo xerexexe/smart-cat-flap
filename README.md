@@ -30,6 +30,7 @@ The optional [local battery history](BATTERY-HISTORY.md) learns consumption over
 - Added optional night rest, cat photos, a compact overview tile, battery waves and manual cat-location corrections.
 - Updated to stable ESPHome 2026.10.0, verified outgoing encrypted connections and improved the built-in antenna setup.
 - Replaced the short-window runtime forecast with local SQLite history, rolling 30-day learning and explicit measurement gaps; verified consumption delivery after a radio pause.
+- Matched the night-rest card to the rounded dashboard panels and added persistent offline time changes with delivery on reconnect.
 - Next: collect long-term battery data and mount the prototype in the frame. Animal microchip reading remains unfinished.
 
 </details>

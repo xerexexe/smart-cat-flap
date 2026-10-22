@@ -1,6 +1,10 @@
 # Home Assistant configuration package (NOT an ESPHome package).
 # Persisted deduplication marker for one flap. Do not set an initial value.
 input_text:
+  smart_cat_flap_night_schedule_request:
+    name: Smart Cat Flap night schedule request
+    max: 255
+    icon: mdi:weather-night
   smart_cat_flap_cat_location:
     name: Smart Cat Flap cat location
     max: 255

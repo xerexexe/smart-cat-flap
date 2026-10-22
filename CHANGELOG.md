@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased — 2026-10-22
+
+- Match night-rest panel corners and border to the other dashboard cards. Persist edited night hours in Home Assistant while the ESP is offline, apply the latest request on reconnect, and clear it only after matching reports. Distinguish queued and confirmed schedules; reject stale connection states.
+
 ## Unreleased — 2026-10-21
 
 - Replace the short-window runtime forecast with optional local SQLite battery history in Home Assistant: rolling 30-day learning, daily/weekly groups, persistent device consumption counters across radio pauses, explicit reset/night gaps and localized dashboard learning progress. Keep the full-battery calibration.

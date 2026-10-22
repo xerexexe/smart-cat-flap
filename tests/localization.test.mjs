@@ -3,7 +3,24 @@ import test from 'node:test';
 globalThis.HTMLElement = class {};
 globalThis.customElements = {get: () => true};
 globalThis.window = {};
-const {languageFor, translateState, buildConfig, formatSensorValue, reportedState, nightWindow, catPhotoPath, batteryLevel, catLocation, batteryColor, batteryEstimateNotice, batteryHistoryNotice, SmartCatFlapCard} = await import('../frontend/smart-cat-flap-card.js');
+const {languageFor, translateState, buildConfig, formatSensorValue, reportedState, nightWindow, nightDeviceOnline, nightScheduleRequest, catPhotoPath, batteryLevel, catLocation, batteryColor, batteryEstimateNotice, batteryHistoryNotice, SmartCatFlapCard} = await import('../frontend/smart-cat-flap-card.js');
+
+test('queued night schedules require both valid whole hours and a request revision',()=>{
+  assert.deepEqual(nightScheduleRequest('{"start":0,"end":23,"revision":"a"}'),{start:0,end:23,revision:'a'});
+  for(const value of ['', 'unknown', '{}','null','{"start":24,"end":6,"revision":"a"}','{"start":22.5,"end":6,"revision":"a"}','{"start":22,"end":6}','{"start":"22","end":6,"revision":"a"}']) assert.equal(nightScheduleRequest(value),null);
+  assert.equal(buildConfig('de',{legacy:true,reliable_delivery:true}).cards.at(-1).schedule_request_entity,'input_text.smart_cat_flap_night_schedule_request');
+});
+
+test('enabled night schedule stays editable online but cached states cannot imply connection',()=>{
+  const states={'binary_sensor.cat_connection':{state:'on'},'switch.cat_night_rest':{state:'on'}};
+  assert.equal(nightDeviceOnline(states,'cat'),true);
+  states['switch.cat_night_rest'].state='off';
+  assert.equal(nightDeviceOnline(states,'cat'),true);
+  states['switch.cat_night_rest'].state='on';
+  states['binary_sensor.cat_connection'].state='off';
+  assert.equal(nightDeviceOnline(states,'cat'),false);
+  assert.equal(nightDeviceOnline({'binary_sensor.cat_verbindung':{state:'off'},'switch.cat_night_rest':{state:'on'}},'cat','binary_sensor.cat_verbindung'),false);
+});
 
 test('history learning is explicit and runtime uses days in both languages',()=>{
   assert.equal(batteryHistoryNotice({state:'learning',attributes:{learning_days:4.8}},'de'),'Lernphase: 4/30 Tage');

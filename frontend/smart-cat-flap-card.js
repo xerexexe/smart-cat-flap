@@ -480,6 +480,8 @@ export function buildConfig(language, options = {}) {
     timezone: options.night_timezone || "Europe/Berlin",
     source_entity: `sensor.${prefix}_${options.legacy ? (LEGACY.power_source || 'power_source') : 'power_source'}`,
     test_entity: `switch.${prefix}_${options.legacy ? LEGACY.test_mode : 'test_mode'}`,
+    connection_entity: `binary_sensor.${prefix}_${options.legacy ? LEGACY.connection : 'connection'}`,
+    schedule_request_entity: options.night_schedule_request_entity || 'input_text.smart_cat_flap_night_schedule_request',
   });
   // Optional hardware signals stay unknown until a real measurement supplies them.
   const suffix = key => options.legacy ? (LEGACY[key] || key) : key;
@@ -567,6 +569,23 @@ export function nightWindow(start, end) {
   return {start, end, hours, segments: !hours ? [] : start < end ? [[start, end]] : [[0, end], [start, 24]].filter(([a,b])=>b>a)};
 }
 
+export function nightDeviceOnline(states, prefix, connectionEntity) {
+  const connection = connectionEntity ? states[connectionEntity] :
+    states[`binary_sensor.${prefix}_connection`] || states[`binary_sensor.${prefix}_verbindung`];
+  if (connectionEntity || connection) return connection?.state === 'on';
+  return ['on','off'].includes(states[`switch.${prefix}_night_rest`]?.state);
+}
+
+export function nightScheduleRequest(raw) {
+  try {
+    const value=JSON.parse(raw);
+    if (!value || !Number.isInteger(value.start) || !Number.isInteger(value.end) ||
+        value.start<0 || value.start>23 || value.end<0 || value.end>23 ||
+        typeof value.revision!=='string' || !value.revision) return null;
+    return {start:value.start,end:value.end,revision:value.revision};
+  } catch (_) { return null; }
+}
+
 class SmartCatFlapNightCard extends HTMLElement {
   constructor() { super(); this.attachShadow({mode:'open'}); this._cache = {}; }
   setConfig(config) {
@@ -584,8 +603,8 @@ class SmartCatFlapNightCard extends HTMLElement {
     const de = language === 'de';
     const t = (en,ger)=>de ? ger : en;
     this.shadowRoot.innerHTML = `<style>
-      :host{display:block}ha-card{overflow:hidden;border-radius:var(--ha-card-border-radius,16px);color:var(--primary-text-color)}
-      .wrap{padding:22px}.head{display:flex;align-items:center;gap:12px}.moon{font-size:27px;background:rgba(132,117,224,.14);color:#a89bec;border-radius:14px;width:48px;height:48px;display:grid;place-items:center;flex:none}
+      :host{display:block;border-radius:22px;overflow:hidden;border:1px solid var(--cat-line,var(--divider-color));background:var(--ha-card-background,var(--card-background-color))}ha-card{overflow:hidden;border:0;border-radius:22px;box-shadow:none;background:transparent;color:var(--primary-text-color)}
+      .wrap{padding:24px}.head{display:flex;align-items:center;gap:12px}.moon{font-size:27px;background:rgba(132,117,224,.14);color:#a89bec;border-radius:14px;width:48px;height:48px;display:grid;place-items:center;flex:none}
       h2{font-family:var(--primary-font-family,sans-serif);font-weight:600;font-size:20px;line-height:1.3;margin:0}.eyebrow{font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:var(--secondary-text-color);margin-bottom:4px}
       .toggle{margin-left:auto;border:1px solid var(--divider-color);border-radius:22px;padding:8px 12px;background:var(--secondary-background-color);color:var(--primary-text-color);font:600 13px var(--primary-font-family,inherit);cursor:pointer;min-height:44px}
       .toggle[aria-checked=true]{background:#7566b9;color:white;border-color:transparent}button:disabled,select:disabled{opacity:.55;cursor:default}button:focus-visible,select:focus-visible,summary:focus-visible{outline:2px solid var(--primary-color);outline-offset:3px}
@@ -610,10 +629,27 @@ class SmartCatFlapNightCard extends HTMLElement {
     for (const field of root.querySelectorAll('select')) {
       field.add(new Option('—',''));
       for (let h=0;h<24;h++) field.add(new Option(`${String(h).padStart(2,'0')}:00`,String(h)));
-      field.onchange=()=> { if(field.value!=='') this._send('number','set_value',this._entity('number',`night_rest_${field.dataset.kind}_hour`),{value:Number(field.value)}); };
+      field.onchange=()=> { if(field.value!=='') this._changeHour(field.dataset.kind,Number(field.value)); };
     }
   }
   _entity(domain,suffix) { return `${domain}.${this._config.entity_prefix}_${suffix}`; }
+  async _changeHour(kind,value) {
+    const queueEntity=this._config.schedule_request_entity||'input_text.smart_cat_flap_night_schedule_request';
+    if (!this._hass.states[queueEntity] || this._hass.states[queueEntity].state==='unavailable') {
+      return this._send('number','set_value',this._entity('number',`night_rest_${kind}_hour`),{value});
+    }
+    const pending=nightScheduleRequest(this._hass.states[queueEntity].state);
+    const start=pending?.start??Number(this._read(this._entity('number','night_rest_start_hour'),v=>nightWindow(v,0)!==null));
+    const end=pending?.end??Number(this._read(this._entity('number','night_rest_end_hour'),v=>nightWindow(v,0)!==null));
+    const request={start,end,[kind]:value,revision:`${Date.now().toString(36)}-${Math.random().toString(36).slice(2,8)}`};
+    this._savingSchedule=true; this._draftSchedule=request; this._update();
+    try {
+      await this._hass.callService('input_text','set_value',{entity_id:queueEntity,value:JSON.stringify(request)});
+      this.shadowRoot.querySelector('.error').textContent='';
+    } catch (_) {
+      this.shadowRoot.querySelector('.error').textContent=this._language==='de'?'Vormerken fehlgeschlagen. Bitte Home-Assistant-Verbindung prüfen.':'Could not save the request. Check the Home Assistant connection.';
+    } finally { this._savingSchedule=false; this._draftSchedule=null; this._update(); }
+  }
   async _send(domain,action,entity,extra={}) {
     const error=this.shadowRoot.querySelector('.error'); error.textContent='';
     try { await this._hass.callService(domain,action,{entity_id:entity,...extra}); }
@@ -635,29 +671,39 @@ class SmartCatFlapNightCard extends HTMLElement {
     const enabledEntity=this._entity('switch','night_rest');
     this._enabled=this._read(enabledEntity,v=>v==='on'||v==='off');
     const validHour=v=>nightWindow(v,0)!==null;
-    const start=this._read(this._entity('number','night_rest_start_hour'),validHour);
-    const end=this._read(this._entity('number','night_rest_end_hour'),validHour);
+    const reportedStart=this._read(this._entity('number','night_rest_start_hour'),validHour);
+    const reportedEnd=this._read(this._entity('number','night_rest_end_hour'),validHour);
+    const queueState=this._hass.states[this._config.schedule_request_entity||'input_text.smart_cat_flap_night_schedule_request'];
+    const canQueue=Boolean(queueState&&queueState.state!=='unavailable');
+    const pending=this._draftSchedule||nightScheduleRequest(queueState?.state);
+    const start=pending?.start??reportedStart,end=pending?.end??reportedEnd;
     const window=nightWindow(start,end),enabled=this._enabled==='on';
-    const current=this._hass.states[enabledEntity]?.state;
-    const online=current==='on'||current==='off';
+    const online=nightDeviceOnline(this._hass.states,this._config.entity_prefix,this._config.connection_entity);
     try { const value=JSON.stringify(this._cache); if(value!==this._stored) { localStorage.setItem(`cat-night:v1:${this._config.entity_prefix}`,value); this._stored=value; } } catch (_) {}
     const toggle=root.querySelector('.toggle');
     toggle.textContent=this._enabled===null?t('Unknown','Unbekannt'):enabled?t('On','Ein'):t('Off','Aus');
     toggle.setAttribute('aria-checked',String(enabled)); toggle.disabled=!online;
     toggle.setAttribute('aria-label',enabled?t('Disable night rest','Nachtruhe ausschalten'):t('Enable night rest','Nachtruhe einschalten'));
-    const hour=v=>`${String(v).padStart(2,'0')}:00`;
+    const hour=v=>`${String(Number(v)).padStart(2,'0')}:00`;
     root.querySelector('.summary').textContent=window?`${hour(window.start)} – ${hour(window.end)}`:t('Schedule unavailable','Zeitplan unbekannt');
     root.querySelector('.subtitle').textContent=window?(window.hours?`${window.hours} ${t('hours of scheduled rest per day','Stunden geplante Ruhe pro Tag')}`:t('Matching times: no rest period','Gleiche Uhrzeiten: keine Ruhephase')):'';
     for(const field of root.querySelectorAll('select')) {
       const entity=this._entity('number',`night_rest_${field.dataset.kind}_hour`);
       const value=field.dataset.kind==='start'?start:end;
       if(root.activeElement!==field) field.value=value===null?'':String(Number(value));
-      field.disabled=!validHour(this._hass.states[entity]?.state);
+      field.disabled=Boolean(this._savingSchedule)||!(canQueue&&window||online&&validHour(this._hass.states[entity]?.state));
+      field.title=canQueue?t('Saved in Home Assistant and sent when the ESP reconnects.','Wird in Home Assistant gespeichert und beim Wiederverbinden gesendet.'):online?'':t('Install the schedule request helper to edit offline.','Für Offline-Änderungen den Zeitplan-Helfer einrichten.');
     }
     const usb=this._hass.states[this._config.source_entity]?.state==='usb';
     const test=this._hass.states[this._config.test_entity]?.state==='on';
     root.querySelector('.note').textContent=this._enabled===null?t('The setting is currently unknown.','Die Einstellung ist aktuell unbekannt.'):!enabled?t('Night rest is off. Detection and reports follow the normal battery-saving mode.','Nachtruhe ist aus. Erkennung und Berichte folgen dem normalen Stromsparmodus.'):usb||test?t('USB power or Test mode is active. The ESP stays awake.','USB-Versorgung oder Testmodus ist aktiv. Der ESP bleibt wach.'):window&&!window.hours?t('Choose different start and end times to schedule rest.','Wähle unterschiedliche Start- und Endzeiten für eine Ruhephase.'):t('Schedule enabled. Detection and reports pause during the rest period.','Zeitplan eingeschaltet. Während der Ruhephase pausieren Erkennung und Berichte.');
     root.querySelector('.caption').textContent=`${this._enabled===null?t('Setting unknown','Einstellung unbekannt'):enabled?t('Schedule','Zeitplan'):t('Preview · currently off','Vorschau · aktuell ausgeschaltet')} · ${this._config.timezone}${!online?t(' · Device offline; showing last reported settings',' · Gerät offline; zuletzt gemeldete Einstellungen'):''}`;
+    if(!online) root.querySelector('.note').textContent=t('ESP not connected: changes are available at the next report. During night deep sleep, wait until morning or connect USB and press Reset to wake it.','ESP nicht verbunden: Änderungen sind beim nächsten Meldefenster möglich. Im nächtlichen Tiefschlaf bis morgens warten oder mit USB und Reset aufwecken.');
+    if(canQueue&&!online) root.querySelector('.note').textContent=t('You can change the times here. Home Assistant saves them until the ESP reconnects. During night deep sleep, this happens after waking.','Du kannst die Zeiten hier ändern. Home Assistant speichert sie bis zur nächsten Verbindung. Im nächtlichen Tiefschlaf erfolgt die Übertragung nach dem Aufwachen.');
+    if(pending) {
+      root.querySelector('.note').textContent=t('Change queued in Home Assistant. Waiting for the ESP to connect and confirm both times.','Änderung in Home Assistant vorgemerkt. Die Zeiten werden beim nächsten Verbinden übertragen und erst nach Bestätigung übernommen.');
+      root.querySelector('.caption').textContent=`${t('Queued schedule','Vorgemerkter Zeitplan')} · ${this._config.timezone}${reportedStart!==null&&reportedEnd!==null?` · ${t('Last confirmed','Zuletzt bestätigt')}: ${hour(reportedStart)} – ${hour(reportedEnd)}`:''}`;
+    }
     const ns='http://www.w3.org/2000/svg';
     const svg=document.createElementNS(ns,'svg'); svg.setAttribute('viewBox','0 0 300 76'); svg.setAttribute('role','img'); svg.setAttribute('aria-label',t('24-hour schedule. Purple: planned rest; gold: detection.','24-Stunden-Zeitplan. Violett: geplante Ruhe; Gold: Erkennung.'));
     const add=(tag,attrs)=>{const e=document.createElementNS(ns,tag); for(const [k,v]of Object.entries(attrs))e.setAttribute(k,v); svg.append(e); return e;};
