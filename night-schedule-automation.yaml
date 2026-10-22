@@ -31,8 +31,7 @@ actions:
     entity_id: binary_sensor.smart_cat_flap_connection
     state: "on"
   - variables:
-      queued: "{{ states('input_text.smart_cat_flap_night_schedule_request') }}"
-      request: "{{ queued | from_json({}) }}"
+      request: "{{ states('input_text.smart_cat_flap_night_schedule_request') | from_json({}) }}"
   - condition: template
     value_template: >-
       {{ request is mapping and request.get('start') is integer and request.get('end') is integer
@@ -56,7 +55,7 @@ actions:
     continue_on_timeout: false
   # A newer request made during transfer must never be cleared by this run.
   - condition: template
-    value_template: "{{ states('input_text.smart_cat_flap_night_schedule_request') == queued }}"
+    value_template: "{{ states('input_text.smart_cat_flap_night_schedule_request') | from_json({}) == request }}"
   - action: input_text.set_value
     target:
       entity_id: input_text.smart_cat_flap_night_schedule_request

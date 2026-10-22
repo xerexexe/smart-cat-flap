@@ -63,6 +63,13 @@ class NightScheduleTests(unittest.TestCase):
         self.states['input_text.smart_cat_flap_night_schedule_request'] = json.dumps({**self.request, 'revision': 'newer'})
         self.assertFalse(self.render(guard))
 
+    def test_request_variable_survives_native_json_conversion(self):
+        variables = next(a['variables'] for a in AUTOMATION['actions'] if 'variables' in a)
+        context = {}
+        for key, template in variables.items():
+            context[key] = self.env.from_string(template).render(**context)
+        self.assertEqual(context['request'], self.request)
+
 
 if __name__ == '__main__':
     unittest.main()
