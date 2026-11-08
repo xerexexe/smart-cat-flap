@@ -9,7 +9,7 @@ The card wraps Home Assistant's native cards and controls. It translates custom 
 ### Installation
 
 1. Copy `frontend/smart-cat-flap-card.js` to `<HA config>/www/smart-cat-flap-card.js`. Create the `www` folder if necessary.
-2. Under Settings → Dashboards → Resources, add `/local/smart-cat-flap-card.js?v=20261022-night-queue2` as a **JavaScript module** for current main. Update an existing resource instead of adding a second copy, then reload the dashboard. Advanced mode may be required to see Resources.
+2. Under Settings → Dashboards → Resources, add `/local/smart-cat-flap-card.js?v=20261108-charging-time` as a **JavaScript module** for current main. Update an existing resource instead of adding a second copy, then reload the dashboard. Advanced mode may be required to see Resources.
 3. Create a dedicated empty dashboard and paste `dashboard-auto.yaml` into its raw configuration editor. Keep the static dashboard as a fallback if desired.
 4. Reload the browser. For updates, replace the file and change the version query in the resource URL to avoid cached code.
 5. Exit dashboard edit mode. Test controls appear only when Test mode is on.
@@ -34,6 +34,10 @@ legacy: true
 Set `language: de` or `language: en` to override automatic selection. `entity_prefix` changes the prefix only; for other custom entity IDs, adapt the source mappings. The built-in dashboard navigation title and entity names in device settings are user-defined configuration and are not dynamically translated by this card. The automatic dashboard uses a neutral cat icon for its view title.
 
 ## Templates without a custom card
+
+While the device reports charging, the energy panel, compact overview and battery detail row replace discharge runtime with a rough time-to-full projection: configured capacity × missing estimated percentage / measured net charging current. The value updates with sensor reports, is rounded up to 15-minute steps and can take longer during the final charging phase. It is not a completion signal. Offline or invalid readings do not produce a countdown; an initial full reference is required. The discharge-history model continues independently, including its learning period. No firmware update or new hardware is needed.
+
+Deutsch: Während des Ladens zeigen Energieansicht, Übersichtskachel und Detailzeile statt der Restlaufzeit die grob geschätzte Ladezeit bis voll. Grundlage sind die eingestellte Kapazität, der fehlende geschätzte Ladestand und der gemessene Ladestrom. Die Anzeige wird mit Messwerten aktualisiert und auf Viertelstunden aufgerundet; die letzte Ladephase kann länger dauern. Bei fehlender Verbindung oder ungültigen Werten erscheint keine laufende Prognose. Die Akkuhistorie lernt unabhängig davon weiter. Kein Firmware-Update und keine zusätzliche Hardware nötig.
 
 Numeric measurement rows use consistent precision in German and English: voltage 2 decimals, runtime 1 decimal, current in amperes 3 decimals, and counters/capacity/percent no decimals. Other measured units use at most 2 decimals. Unknown/invalid measurements stay unknown; chip IDs and event timestamps are not treated as measurements. Rounding affects the display only, leaving measurement calculations unchanged. Native editable number controls and static cards retain Home Assistant's own formatting.
 

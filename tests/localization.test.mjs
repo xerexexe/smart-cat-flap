@@ -3,7 +3,60 @@ import test from 'node:test';
 globalThis.HTMLElement = class {};
 globalThis.customElements = {get: () => true};
 globalThis.window = {};
-const {languageFor, translateState, buildConfig, formatSensorValue, reportedState, nightWindow, nightDeviceOnline, nightScheduleRequest, catPhotoPath, batteryLevel, catLocation, batteryColor, batteryEstimateNotice, batteryHistoryNotice, SmartCatFlapCard} = await import('../frontend/smart-cat-flap-card.js');
+const {languageFor, translateState, buildConfig, formatSensorValue, reportedState, nightWindow, nightDeviceOnline, nightScheduleRequest, catPhotoPath, batteryLevel, catLocation, batteryColor, batteryEstimateNotice, batteryHistoryNotice, chargingTime, SmartCatFlapCard} = await import('../frontend/smart-cat-flap-card.js');
+
+function chargingStates(prefix='cat', legacy=false) {
+  const state=(value,unit)=>({state:String(value),attributes:{unit_of_measurement:unit}});
+  return {
+    [`binary_sensor.${prefix}_${legacy?'verbindung':'connection'}`]:state('on'),
+    [`sensor.${prefix}_charging_status`]:state('charging'),
+    [`sensor.${prefix}_power_source`]:state('usb'),
+    [`sensor.${prefix}_battery_estimate_quality`]:state('calibrated'),
+    [`sensor.${prefix}_estimated_battery_level`]:state(25,'%'),
+    [`number.${prefix}_usable_battery_capacity`]:state(2000,'mAh'),
+    [`sensor.${prefix}_battery_current`]:state(-0.1,'A'),
+  };
+}
+
+test('charge time uses missing capacity and net charging current in either unit and language',()=>{
+  const states=chargingStates();
+  assert.equal(chargingTime(states,'cat',false,'de').hours,15);
+  assert.equal(chargingTime(states,'cat',false,'de').value,'ca. 15 h');
+  states['sensor.cat_battery_current']={state:'-100',attributes:{unit_of_measurement:'mA'}};
+  assert.equal(chargingTime(states,'cat',false,'en').value,'approx. 15 h');
+  assert.match(chargingTime(states,'cat',false,'en').note,/final charging phase/);
+  states['sensor.cat_estimated_battery_level'].state='24.9';
+  assert.equal(chargingTime(states,'cat',false,'de').value,'ca. 15 h 15 min');
+  states['sensor.cat_battery_current'].state='-50';
+  assert.match(chargingTime(states,'cat',false,'de').value,/1 Tag 6 Stunden/);
+  assert.equal(chargingTime(chargingStates('katzenklappe',true),'katzenklappe',true,'de').hours,15);
+  assert.deepEqual(buildConfig('de',{legacy:true}).cards[1].entities[3].battery_time,{prefix:'katzenklappe',legacy:true});
+});
+
+test('charge estimate rejects offline, missing, invalid and discharge readings without zero-hour claims',()=>{
+  for(const [entity,values] of Object.entries({
+    'binary_sensor.cat_connection':['off','unavailable'],
+    'sensor.cat_power_source':['battery','unknown'],
+    'sensor.cat_battery_current':['unknown','unavailable','','NaN','Infinity','0','0.1','-0.005'],
+    'number.cat_usable_battery_capacity':['unknown','','0','-2000'],
+    'sensor.cat_estimated_battery_level':['unknown','','-1','101'],
+  })) for(const value of values){
+    const states=chargingStates(); states[entity].state=value;
+    assert.equal(chargingTime(states,'cat',false,'de').hours,null,`${entity}=${value}`);
+  }
+  const states=chargingStates();
+  states['sensor.cat_battery_estimate_quality'].state='uncalibrated';
+  assert.match(chargingTime(states,'cat',false,'de').value,/Vollpunkt/);
+  states['sensor.cat_battery_estimate_quality'].state='uncertain';
+  assert.equal(chargingTime(states,'cat',false,'de').hours,15);
+  assert.match(chargingTime(states,'cat',false,'de').note,/Messlücke/);
+  states['sensor.cat_estimated_battery_level'].state='100';
+  assert.equal(chargingTime(states,'cat',false,'de').value,'Ladeabschluss');
+  for(const status of ['discharging','not_charging','unknown','unavailable']) {
+    states['sensor.cat_charging_status'].state=status;
+    assert.equal(chargingTime(states,'cat',false,'de'),null);
+  }
+});
 
 test('queued night schedules require both valid whole hours and a request revision',()=>{
   assert.deepEqual(nightScheduleRequest('{"start":0,"end":23,"revision":"a"}'),{start:0,end:23,revision:'a'});

@@ -438,6 +438,52 @@ export function batteryEstimateNotice(quality, language) {
   return "";
 }
 
+// A present-rate projection, not a charger completion signal or a countdown.
+// Use live measurements only; the CC/CV taper can extend the final charge phase.
+export function chargingTime(states, prefix, legacy, language, chargeState) {
+  const read = (domain, key) => states[`${domain}.${prefix}_${legacy ? (LEGACY[key] || key) : key}`];
+  if ((chargeState || read('sensor', 'charging_status'))?.state !== 'charging') return null;
+  const de = language === 'de', t = (en, ger) => de ? ger : en;
+  const result = {
+    label: t('Estimated time to full', 'Geschätzte Ladezeit bis voll'),
+    value: t('Awaiting charging readings', 'Neue Ladewerte abwarten'),
+    note: t('At the measured charging rate; the final charging phase can take longer.',
+      'Beim gemessenen Ladestrom; die letzte Ladephase kann länger dauern.'),
+    hours: null,
+  };
+  const number = state => {
+    const raw = state?.state;
+    return typeof raw === 'string' && raw.trim() !== '' && Number.isFinite(Number(raw)) ? Number(raw) : null;
+  };
+  if (read('binary_sensor', 'connection')?.state !== 'on' || read('sensor', 'power_source')?.state !== 'usb') return result;
+  const quality = read('sensor', 'battery_estimate_quality')?.state;
+  if (!['calibrated', 'uncertain'].includes(quality)) {
+    result.value = batteryEstimateNotice(quality, language) || t('Charge level unknown', 'Ladestand unbekannt');
+    return result;
+  }
+  const level = number(read('sensor', 'estimated_battery_level'));
+  const capacityState = read('number', 'usable_battery_capacity'), currentState = read('sensor', 'battery_current');
+  let capacity = number(capacityState), current = number(currentState);
+  if (capacityState?.attributes?.unit_of_measurement === 'Ah' && capacity !== null) capacity *= 1000;
+  if (currentState?.attributes?.unit_of_measurement === 'A' && current !== null) current *= 1000;
+  else if (currentState?.attributes?.unit_of_measurement !== 'mA') current = null;
+  if (!['mAh', 'Ah'].includes(capacityState?.attributes?.unit_of_measurement) || capacity === null || capacity <= 0 ||
+      level === null || level < 0 || level > 100 || current === null || current >= -5) return result;
+  if (quality === 'uncertain') result.note += ' ' + batteryEstimateNotice(quality, language) + '.';
+  if (level >= 99.5) {
+    result.value = t('Finishing charge', 'Ladeabschluss');
+    return result; // Never infer "full" or zero remaining time from the estimated percentage.
+  }
+  result.hours = capacity * (1 - level / 100) / -current;
+  // Quarter-hour steps avoid implying minute-level accuracy for this projection.
+  const minutes = Math.max(15, Math.ceil(result.hours * 4) * 15), hours = Math.floor(minutes / 60), rest = minutes % 60;
+  const n = value => new Intl.NumberFormat(language, {maximumFractionDigits: 0}).format(value);
+  const duration = hours >= 24 ? formatSensorValue({state: String(hours), attributes: {unit_of_measurement: 'h'}}, 'sensor.charge_estimated_runtime', language)
+    : [hours ? `${n(hours)} h` : '', rest ? `${n(rest)} min` : ''].filter(Boolean).join(' ');
+  result.value = `${t('approx.', 'ca.')} ${duration}`;
+  return result;
+}
+
 export function buildConfig(language, options = {}) {
   const prefix = options.entity_prefix || (options.legacy ? "katzenklappe" : "smart_cat_flap");
   if (!/^[a-z0-9_]+$/.test(prefix)) throw new Error("Invalid entity_prefix");
@@ -499,6 +545,7 @@ export function buildConfig(language, options = {}) {
     ].map(([key, name]) => ({
       type: "custom:smart-cat-flap-state-row", entity: `sensor.${prefix}_${suffix(key)}`,
       name, language, display_unit: key === "battery_current" ? "mA" : undefined, missing_is_unknown: true, retain_last_report: Boolean(options.reliable_delivery),
+      ...(key === 'estimated_runtime' ? {battery_time: {prefix, legacy: Boolean(options.legacy)}} : {}),
     })),
   };
   cards[1].entities.push({
@@ -785,6 +832,20 @@ class SmartCatFlapStateRow extends HTMLElement {
       const stamp = Number.isNaN(date.valueOf()) ? "" : date.toLocaleTimeString(language);
       value += ` · ${language === "de" ? "Stand" : "As of"} ${stamp}`;
     }
+    this._label.textContent = this._config.name || this._config.entity;
+    this._button.title = '';
+    if (this._config.battery_time) {
+      const {prefix, legacy} = this._config.battery_time;
+      const currentCharge = hass.states[`sensor.${prefix}_charging_status`];
+      if (currentCharge && !['unavailable', 'unknown'].includes(currentCharge.state)) this._lastCharge = currentCharge;
+      const charge = this._config.retain_last_report ? reportedState(currentCharge, this._lastCharge).state : currentCharge;
+      const time = chargingTime(hass.states, prefix, legacy, language, charge);
+      if (time) {
+        this._label.textContent = time.label;
+        value = time.value;
+        this._button.title = time.note;
+      }
+    }
     this._value.textContent = value;
   }
 }
@@ -877,7 +938,7 @@ export class SmartCatFlapCard extends HTMLElement {
           <section class="panel activity"><div class="panel-head"><h3>${t('At the flap','An der Klappe')}</h3><ha-icon icon="mdi:paw" class="mini-icon"></ha-icon></div><div class="eyebrow">${t('Last reported opening','Letzte gemeldete Öffnung')}</div><button class="info opening-title" data-info="last_opening_direction"></button><div class="opening-date"></div><div class="flow"><div class="location"><ha-icon icon="mdi:home-outline"></ha-icon>${t('Inside','Innen')}</div><div class="flow-line"><span class="flow-arrow"></span></div><div class="location"><ha-icon icon="mdi:tree-outline"></ha-icon>${t('Outside','Außen')}</div></div><div class="metrics"><div><div class="metric-value opening-count"></div><div class="metric-name">${t('Openings since restart','Öffnungen seit Neustart')}</div></div><div><div class="metric-value pending-count"></div><div class="metric-name">${t('Awaiting confirmation','Warten auf Bestätigung')}</div></div></div><div class="location-slot"></div><div class="explanation">${t('The direction describes flap movement. It does not confirm where your cat is.','Die Richtung beschreibt die Bewegung der Klappe. Sie bestätigt nicht den Aufenthaltsort deiner Katze.')}</div></section>
           <div class="night-slot"></div>
         </div><div class="column">
-          <section class="panel battery"><div class="panel-head"><h3>${t('Energy','Energie')}</h3><span class="tag power-tag"></span></div><div class="battery-main"><svg class="battery-symbol" viewBox="0 0 100 120" aria-hidden="true"><rect x="35" y="5" width="30" height="8" rx="4" fill="currentColor"/><rect x="14" y="17" width="72" height="95" rx="17" fill="rgba(112,207,191,.08)" stroke="currentColor" stroke-width="2"/><defs><clipPath id="cat-battery-window"><rect x="20" y="23" width="60" height="83" rx="12"/></clipPath></defs><g class="battery-liquid" clip-path="url(#cat-battery-window)"><g class="battery-level-position"><path class="battery-wave back" d="M-60 0 Q-45 -5 -30 0 T0 0 T30 0 T60 0 T90 0 T120 0 T150 0 T180 0 V160 H-60Z"/><path class="battery-wave" d="M-60 0 Q-45 -5 -30 0 T0 0 T30 0 T60 0 T90 0 T120 0 T150 0 T180 0 V160 H-60Z"/></g></g><path class="battery-bolt" d="m54 37-20 31h15l-3 23 22-33H52Z" fill="currentColor"/></svg><div><div class="eyebrow">${t('Battery voltage','Akkuspannung')}</div><button class="info voltage" data-info="battery_voltage"></button><div class="charge"></div><div class="battery-motion" hidden></div></div></div><div class="battery-meta"><span class="runtime"></span><span class="small">${t('estimated on battery','geschätzt im Akkubetrieb')}</span></div><div class="small">${t('Charge level and runtime are estimates based on measured current since full-battery calibration.','Ladestand und Laufzeit sind Schätzungen aus der Strommessung seit der Voll-Kalibrierung.')}</div><div class="battery-warning" hidden></div><div class="stamp"></div></section>
+          <section class="panel battery"><div class="panel-head"><h3>${t('Energy','Energie')}</h3><span class="tag power-tag"></span></div><div class="battery-main"><svg class="battery-symbol" viewBox="0 0 100 120" aria-hidden="true"><rect x="35" y="5" width="30" height="8" rx="4" fill="currentColor"/><rect x="14" y="17" width="72" height="95" rx="17" fill="rgba(112,207,191,.08)" stroke="currentColor" stroke-width="2"/><defs><clipPath id="cat-battery-window"><rect x="20" y="23" width="60" height="83" rx="12"/></clipPath></defs><g class="battery-liquid" clip-path="url(#cat-battery-window)"><g class="battery-level-position"><path class="battery-wave back" d="M-60 0 Q-45 -5 -30 0 T0 0 T30 0 T60 0 T90 0 T120 0 T150 0 T180 0 V160 H-60Z"/><path class="battery-wave" d="M-60 0 Q-45 -5 -30 0 T0 0 T30 0 T60 0 T90 0 T120 0 T150 0 T180 0 V160 H-60Z"/></g></g><path class="battery-bolt" d="m54 37-20 31h15l-3 23 22-33H52Z" fill="currentColor"/></svg><div><div class="eyebrow">${t('Battery voltage','Akkuspannung')}</div><button class="info voltage" data-info="battery_voltage"></button><div class="charge"></div><div class="battery-motion" hidden></div></div></div><div class="battery-meta"><span class="runtime"></span><span class="small">${t('estimated on battery','geschätzt im Akkubetrieb')}</span></div><div class="small battery-explanation">${t('Charge level and runtime are estimates based on measured current since full-battery calibration.','Ladestand und Laufzeit sind Schätzungen aus der Strommessung seit der Voll-Kalibrierung.')}</div><div class="battery-warning" hidden></div><div class="stamp"></div></section>
           <section class="panel profile"><div class="panel-head"><h3>${t('Your cat','Deine Katze')}</h3><ha-icon icon="mdi:cat" class="mini-icon"></ha-icon></div><div class="photo-intro"><img class="photo-preview" hidden alt="${t('Your cat','Deine Katze')}"><p class="small">${t('One photo for your dashboard and opening notifications.','Ein Foto für dein Dashboard und die Öffnungsbenachrichtigungen.')}</p></div><button class="photo-save photo-choose">${t('Choose photo','Foto auswählen')}</button><input class="photo-file" type="file" accept="image/*" hidden><p class="small">${t('Choose an image from your phone or computer. It is resized and saved in Home Assistant.','Wähle ein Bild vom Handy oder PC. Es wird verkleinert und in Home Assistant gespeichert.')}</p><details><summary>${t('Add or change photo','Foto hinterlegen oder ändern')}</summary><p class="details-copy">${t('Upload a photo in Home Assistant Media, then enter its path below. For example: /media/local/cat.jpg. Leave empty to remove it.','Lade ein Foto unter Medien in Home Assistant hoch und trage unten den Pfad ein. Zum Beispiel: /media/local/katze.jpg. Zum Entfernen leer lassen.')}</p><a class="media-link small" href="/media-browser">${t('Open Media','Medien öffnen')}</a><input class="photo-input" aria-label="${t('Cat photo path or HTTPS URL','Pfad oder HTTPS-Adresse des Katzenfotos')}" placeholder="/media/local/katze.jpg" maxlength="255"><button class="photo-save photo-path-save">${t('Save photo','Foto übernehmen')}</button><div class="photo-message" role="status"></div></details></section>
           <section class="panel"><details class="settings"><summary>${t('Power & device','Strom & Gerät')}</summary><p class="details-copy">${t('Live battery readings and device settings. Negative battery current means charging; positive means discharge. Capacity is the configured value, not a capacity measurement.','Aktuelle Akkuwerte und Geräteeinstellungen. Negativer Akkustrom bedeutet Laden, positiver Entladen. Die Kapazität ist eingestellt, nicht gemessen.')}</p><div class="native settings-content"></div></details></section>
           <section class="panel"><details class="diagnostics"><summary>${t('Tests & diagnostics','Tests & Diagnose')}</summary><p class="details-copy">${t('Enable Test mode here. Simulations appear only while it is enabled.','Hier schaltest du den Testmodus ein. Simulationen erscheinen nur, solange er aktiv ist.')}</p><div class="native diagnostic-content"></div></details><div class="native tests-content"></div></section>
@@ -959,6 +1020,7 @@ export class SmartCatFlapCard extends HTMLElement {
     const card=document.createElement('smart-cat-flap-location');card.setConfig({language:this._language,compact,location_entity:this._config.location_entity});card.hass=this._hass;slot.append(card);this._cards.push(card);
   }
   _entity(domain,key){const prefix=this._config.entity_prefix||(this._config.legacy?'katzenklappe':'smart_cat_flap');if(domain==='sensor'&&key==='estimated_runtime'&&this._hass?.states[`sensor.${prefix}_history_runtime`])return `sensor.${prefix}_history_runtime`;return `${domain}.${prefix}_${this._config.legacy?(LEGACY[key]||key):key}`;}
+  _chargingTime(charge) {return chargingTime(this._hass.states,this._config.entity_prefix||(this._config.legacy?'katzenklappe':'smart_cat_flap'),this._config.legacy,this._language,charge);}
   _reading(domain,key,retain=false){
     const entity=this._entity(domain,key),current=this._hass.states[entity];
     if(!retain)return {state:current,retained:false};
@@ -1014,6 +1076,11 @@ export class SmartCatFlapCard extends HTMLElement {
     const learningNotice=batteryHistoryNotice(historyState,language);
     put('.runtime',learningNotice&&historyState?.state!=='partial'?learningNotice:formatSensorValue(runtime.state||{state:'unknown'},this._entity('sensor','estimated_runtime'),language));
     put('.battery-meta .small',historyState?.state==='learning'?t('Consumption is being recorded','Verbrauch wird aufgezeichnet'):t('estimated on battery','geschätzt im Akkubetrieb'));
+    const chargeTime=this._chargingTime(charge.state);
+    if(chargeTime){put('.runtime',chargeTime.value);put('.battery-meta .small',t('until full · estimated','bis voll · geschätzt'));}
+    root.querySelector('.battery-meta').title=chargeTime?.note||'';
+    put('.battery-explanation',chargeTime?.note||t('Charge level and runtime are estimates based on measured current since full-battery calibration.','Ladestand und Laufzeit sind Schätzungen aus der Strommessung seit der Voll-Kalibrierung.'));
+    root.querySelector('.battery-meta').setAttribute('aria-label',chargeTime?`${chargeTime.label}: ${chargeTime.value}. ${chargeTime.note}`:'');
     const low=raw('binary_sensor','battery_low')==='on';
     const uncertain=qualityState==='uncertain'||historyState?.state==='partial';
     root.querySelector('.battery-warning').hidden=!low&&!uncertain;
@@ -1100,6 +1167,9 @@ class SmartCatFlapCompactCard extends SmartCatFlapCard {
     root.querySelector('.charge').classList.toggle('warning',raw('binary_sensor','battery_low')==='on');
     const historyState=this._hass.states[this._entity('sensor','history_model_status')],learningNotice=batteryHistoryNotice(historyState,language);
     put('.runtime',learningNotice&&historyState?.state!=='partial'?learningNotice:`${t('Estimated runtime','Geschätzte Restlaufzeit')}: ${formatSensorValue(runtime.state||{state:'unknown'},this._entity('sensor','estimated_runtime'),language)}`);
+    const chargeTime=this._chargingTime(charge.state);
+    if(chargeTime)put('.runtime',`${t('Until full','Bis voll')}: ${chargeTime.value}`);
+    root.querySelector('.runtime').title=chargeTime?.note||'';
     const retained=[voltage,charge,levelReading,source,quality,runtime].filter(r=>r.retained),times=retained.map(r=>Date.parse(r.state?.last_updated)).filter(Number.isFinite);
     put('.stamp',[estimateNotice,retained.length?`${t('Last reported','Zuletzt gemeldet')}${times.length?' · '+new Date(Math.min(...times)).toLocaleString(language):''}`:''].filter(Boolean).join(' · '));
     const path=catPhotoPath(this._hass.states[this._config.cat_photo_entity||'input_text.smart_cat_flap_cat_photo']?.state);

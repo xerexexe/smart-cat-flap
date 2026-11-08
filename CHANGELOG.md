@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased — 2026-11-08
+
+- Show estimated time to full instead of discharge runtime while charging in the energy panel, home overview and battery detail row. Project from estimated missing charge and measured net charging current, round to quarter hours and explain the final charging taper. Offline, invalid or uncalibrated readings show guidance; an estimated 100% does not claim charge completion. Discharge history and calibration are unchanged.
+
 ## Unreleased — 2026-10-22
 
 - Match night-rest panel corners and border to the other dashboard cards. Persist edited night hours in Home Assistant while the ESP is offline, apply the latest request on reconnect, and clear it only after matching reports. Distinguish queued and confirmed schedules; reject stale connection states.
