@@ -1,0 +1,38 @@
+# Optional Home Assistant automation for INA3221. This is a plausibility-based
+# full reference, not a direct reading of the charger's termination output.
+# For the legacy installation replace smart_cat_flap with katzenklappe in the
+# device entity IDs, battery_voltage with akkuspannung, and connection with verbindung.
+alias: Smart Cat Flap - Confirm completed charge
+description: Re-anchor the saved charge counter after observed charging followed by ten minutes of stable near-zero current at high voltage.
+mode: single
+triggers:
+  - trigger: state
+    entity_id: sensor.smart_cat_flap_charging_status
+    from: charging
+    to: not_charging
+    for: "00:10:00"
+conditions:
+  - condition: state
+    entity_id: binary_sensor.smart_cat_flap_connection
+    state: "on"
+  - condition: state
+    entity_id: sensor.smart_cat_flap_power_source
+    state: usb
+    for: "00:10:00"
+  - condition: template
+    value_template: >-
+      {% set v = states('sensor.smart_cat_flap_battery_voltage') | float(-1) %}
+      {% set i = states('sensor.smart_cat_flap_battery_current') | float(99) %}
+      {{ 4.12 <= v <= 4.25 and -0.005 <= i <= 0.005 }}
+actions:
+  # The existing firmware button independently checks live USB/current/voltage.
+  # It updates only the full reference, never the discharge history database.
+  - action: button.press
+    target:
+      entity_id: button.smart_cat_flap_confirm_full_battery
+  - wait_template: >-
+      {{ is_state('binary_sensor.smart_cat_flap_connection', 'on')
+         and states('sensor.smart_cat_flap_estimated_battery_level') | float(-1) >= 99
+         and is_state('sensor.smart_cat_flap_battery_estimate_quality', 'calibrated') }}
+    timeout: "00:00:15"
+    continue_on_timeout: false

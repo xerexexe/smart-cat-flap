@@ -48,8 +48,10 @@ test('charge estimate rejects offline, missing, invalid and discharge readings w
   states['sensor.cat_battery_estimate_quality'].state='uncalibrated';
   assert.match(chargingTime(states,'cat',false,'de').value,/Vollpunkt/);
   states['sensor.cat_battery_estimate_quality'].state='uncertain';
-  assert.equal(chargingTime(states,'cat',false,'de').hours,15);
+  assert.equal(chargingTime(states,'cat',false,'de').hours,null);
+  assert.equal(chargingTime(states,'cat',false,'de').value,'Vollpunkt prüfen');
   assert.match(chargingTime(states,'cat',false,'de').note,/Messlücke/);
+  states['sensor.cat_battery_estimate_quality'].state='calibrated';
   states['sensor.cat_estimated_battery_level'].state='100';
   assert.equal(chargingTime(states,'cat',false,'de').value,'Ladeabschluss');
   for(const status of ['discharging','not_charging','unknown','unavailable']) {

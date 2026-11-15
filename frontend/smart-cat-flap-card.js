@@ -457,6 +457,12 @@ export function chargingTime(states, prefix, legacy, language, chargeState) {
   };
   if (read('binary_sensor', 'connection')?.state !== 'on' || read('sensor', 'power_source')?.state !== 'usb') return result;
   const quality = read('sensor', 'battery_estimate_quality')?.state;
+  if (quality === 'uncertain') {
+    result.value = t('Check full reference', 'Vollpunkt prüfen');
+    result.note = t('The charge counter is uncertain after a measurement gap. A reliable full reference is needed before estimating time to full.',
+      'Die Ladungszählung ist nach einer Messlücke unsicher. Vor einer Ladezeitprognose ist ein verlässlicher Vollpunkt nötig.');
+    return result;
+  }
   if (!['calibrated', 'uncertain'].includes(quality)) {
     result.value = batteryEstimateNotice(quality, language) || t('Charge level unknown', 'Ladestand unbekannt');
     return result;
@@ -469,7 +475,6 @@ export function chargingTime(states, prefix, legacy, language, chargeState) {
   else if (currentState?.attributes?.unit_of_measurement !== 'mA') current = null;
   if (!['mAh', 'Ah'].includes(capacityState?.attributes?.unit_of_measurement) || capacity === null || capacity <= 0 ||
       level === null || level < 0 || level > 100 || current === null || current >= -5) return result;
-  if (quality === 'uncertain') result.note += ' ' + batteryEstimateNotice(quality, language) + '.';
   if (level >= 99.5) {
     result.value = t('Finishing charge', 'Ladeabschluss');
     return result; // Never infer "full" or zero remaining time from the estimated percentage.

@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased — 2026-11-15
+
+- Reconcile the charge counter with an optional guarded Home Assistant full-reference automation after observed charging ends at high voltage and near-zero current for ten minutes. Keep voltage warnings independent of percentage and preserve battery history. Suppress numeric charging forecasts while the charge counter is uncertain.
+
 ## Unreleased — 2026-11-08
 
 - Show estimated time to full instead of discharge runtime while charging in the energy panel, home overview and battery detail row. Project from estimated missing charge and measured net charging current, round to quarter hours and explain the final charging taper. Offline, invalid or uncalibrated readings show guidance; an estimated 100% does not claim charge completion. Discharge history and calibration are unchanged.
