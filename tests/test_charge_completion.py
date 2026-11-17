@@ -18,7 +18,7 @@ class ChargeCompletionTests(unittest.TestCase):
         conditions = AUTOMATION['conditions']
         self.assertEqual(conditions[0]['state'], 'on')
         self.assertEqual((conditions[1]['state'], conditions[1]['for']), ('usb', '00:10:00'))
-        self.assertEqual((conditions[3]['state'], conditions[3]['for']), ('not_charging', '00:10:00'))
+        self.assertEqual((conditions[3]['state'], conditions[3]['for']), ('not_charging', '00:01:00'))
         self.assertEqual(AUTOMATION['actions'][0]['action'], 'button.press')
         self.assertTrue(AUTOMATION['actions'][0]['target']['entity_id'].endswith('_confirm_full_battery'))
 

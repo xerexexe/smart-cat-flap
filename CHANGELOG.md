@@ -2,7 +2,7 @@
 
 ## Unreleased — 2026-11-17
 
-- Recheck the full-reference conditions every minute, after API reconnect and HA startup instead of relying only on a direct charging-to-idle transition. Require ten minutes of USB/idle stability and telemetry newer than 30 seconds. Skip already-confirmed full references to prevent repeated resets.
+- Recheck the full-reference conditions every minute, after API reconnect and HA startup instead of relying only on a direct charging-to-idle transition. Require ten minutes of USB power, one minute of idle charge status and telemetry newer than 30 seconds; brief measurement interruptions no longer demand a new ten-minute idle window. Skip already-confirmed full references to prevent repeated resets.
 
 ## Unreleased — 2026-11-15
 
