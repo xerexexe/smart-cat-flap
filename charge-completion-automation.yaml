@@ -17,6 +17,9 @@ triggers:
     event: start
   - trigger: time_pattern
     minutes: "/1"
+  - trigger: state
+    entity_id: sensor.smart_cat_flap_battery_history_report
+    for: "00:00:02"
 conditions:
   - condition: state
     entity_id: binary_sensor.smart_cat_flap_connection

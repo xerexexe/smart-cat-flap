@@ -15,6 +15,7 @@ class ChargeCompletionTests(unittest.TestCase):
         self.assertTrue(any(t.get('minutes') == '/1' for t in AUTOMATION['triggers']))
         self.assertTrue(any(t.get('event') == 'start' for t in AUTOMATION['triggers']))
         self.assertTrue(any(t.get('entity_id', '').endswith('_connection') for t in AUTOMATION['triggers']))
+        self.assertTrue(any(t.get('entity_id', '').endswith('_battery_history_report') and t.get('for') == '00:00:02' for t in AUTOMATION['triggers']))
         conditions = AUTOMATION['conditions']
         self.assertEqual(conditions[0]['state'], 'on')
         self.assertEqual((conditions[1]['state'], conditions[1]['for']), ('usb', '00:10:00'))
