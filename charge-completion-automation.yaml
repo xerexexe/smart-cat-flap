@@ -3,14 +3,20 @@
 # For the legacy installation replace smart_cat_flap with katzenklappe in the
 # device entity IDs, battery_voltage with akkuspannung, and connection with verbindung.
 alias: Smart Cat Flap - Confirm completed charge
-description: Re-anchor the saved charge counter after observed charging followed by ten minutes of stable near-zero current at high voltage.
+description: Recheck a plausible completed charge regularly and after reconnects; confirm the saved full reference only when it needs correction.
 mode: single
 triggers:
   - trigger: state
     entity_id: sensor.smart_cat_flap_charging_status
-    from: charging
     to: not_charging
     for: "00:10:00"
+  - trigger: state
+    entity_id: binary_sensor.smart_cat_flap_connection
+    to: "on"
+  - trigger: homeassistant
+    event: start
+  - trigger: time_pattern
+    minutes: "/1"
 conditions:
   - condition: state
     entity_id: binary_sensor.smart_cat_flap_connection
@@ -24,6 +30,18 @@ conditions:
       {% set v = states('sensor.smart_cat_flap_battery_voltage') | float(-1) %}
       {% set i = states('sensor.smart_cat_flap_battery_current') | float(99) %}
       {{ 4.12 <= v <= 4.25 and -0.005 <= i <= 0.005 }}
+  - condition: state
+    entity_id: sensor.smart_cat_flap_charging_status
+    state: not_charging
+    for: "00:10:00"
+  - condition: template
+    value_template: >-
+      {{ states('sensor.smart_cat_flap_estimated_battery_level') | float(-1) < 99
+         or not is_state('sensor.smart_cat_flap_battery_estimate_quality', 'calibrated') }}
+  - condition: template
+    value_template: >-
+      {{ states('sensor.smart_cat_flap_battery_history_report') not in ['unknown', 'unavailable', '']
+         and 0 <= as_timestamp(now()) - as_timestamp(states['sensor.smart_cat_flap_battery_history_report'].last_updated, 0) <= 30 }}
 actions:
   # The existing firmware button independently checks live USB/current/voltage.
   # It updates only the full reference, never the discharge history database.

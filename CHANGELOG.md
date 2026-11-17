@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased — 2026-11-17
+
+- Recheck the full-reference conditions every minute, after API reconnect and HA startup instead of relying only on a direct charging-to-idle transition. Require ten minutes of USB/idle stability and telemetry newer than 30 seconds. Skip already-confirmed full references to prevent repeated resets.
+
 ## Unreleased — 2026-11-15
 
 - Reconcile the charge counter with an optional guarded Home Assistant full-reference automation after observed charging ends at high voltage and near-zero current for ten minutes. Keep voltage warnings independent of percentage and preserve battery history. Suppress numeric charging forecasts while the charge counter is uncertain.
