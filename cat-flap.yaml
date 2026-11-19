@@ -3,7 +3,7 @@ packages:
   xiao_radio: !include xiao-esp32c6-radio.yaml
 
 esphome:
-  min_version: 2026.10.0
+  min_version: 2026.11.0
   name: smart-cat-flap
   friendly_name: Smart Cat Flap
 
@@ -13,8 +13,13 @@ esp32:
     type: esp-idf
 
 logger:
+  boot_log_buffer_size: 4kB
+  boot_log_level: WARN
 
 api:
+  on_client_connected:
+    - delay: 2s
+    - logger.replay_boot_logs:
   outgoing_connection:
     delay: 5s
   encryption:

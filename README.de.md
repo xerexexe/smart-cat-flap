@@ -6,7 +6,7 @@
 
 Eine vorhandene Katzenklappe im Fliegengitter mit einem **Seeed Studio XIAO ESP32-C6**, ESPHome und Home Assistant erweitern. Zwei Reedkontakte erfassen die Schwenkrichtung. Home Assistant meldet Öffnungen auf dem Handy. Ein Testmodus ermöglicht Tests der Erkennung, Meldungen und späteren Erweiterungen.
 
-**Aktueller Aufbau · 21.10.2026:** Akku, Reedkontakte und schwarzer INA3221 sind angeschlossen (SDA D5/GPIO23, SCL D4/GPIO22; Adresse `0x40`). Die stabile ESPHome-Version 2026.10.0, verschlüsselte ausgehende Verbindungen und der [Fünf-Minuten-Meldezyklus im Stromsparmodus](BATTERY-SAVING.de.md) wurden am Prototyp geprüft. Das Dashboard enthält Katzenfotos, eine animierte Akkuanzeige, manuelle Aufenthaltskorrekturen und optionale Nachtruhe. Die neue lokale Akkuhistorie zeichnet auf; die 30-tägige Lernphase und die Prüfung der tatsächlichen Gesamtlaufzeit stehen noch aus. Rahmenmontage und Tierchip-Erkennung bleiben offen. Beta-Entwicklung im `main`-Branch; letzter Release-Tag weiterhin `v0.1.0-beta.3`.
+**Aktueller Aufbau · 19.11.2026:** Akku, Reedkontakte und schwarzer INA3221 sind angeschlossen (SDA D5/GPIO23, SCL D4/GPIO22; Adresse `0x40`). Die stabile ESPHome-Version 2026.11.0, verschlüsselte ausgehende Verbindungen und der [Fünf-Minuten-Meldezyklus im Stromsparmodus](BATTERY-SAVING.de.md) wurden am Prototyp geprüft. Das Dashboard enthält Katzenfotos, eine animierte Akkuanzeige, manuelle Aufenthaltskorrekturen und optionale Nachtruhe. Die neue lokale Akkuhistorie zeichnet auf; die 30-tägige Lernphase und die Prüfung der tatsächlichen Gesamtlaufzeit stehen noch aus. Rahmenmontage und Tierchip-Erkennung bleiben offen. Beta-Entwicklung im `main`-Branch; letzter Release-Tag weiterhin `v0.1.0-beta.3`.
 
 Die optionale [lokale Akkuhistorie](BATTERY-HISTORY.de.md) lernt den Verbrauch aus den jeweils letzten 30 Tagen und ersetzt die kurzfristige Laufzeitprognose. Fehlende Nachtmessungen bleiben sichtbar.
 
@@ -29,13 +29,14 @@ Die optionale [lokale Akkuhistorie](BATTERY-HISTORY.de.md) lernt den Verbrauch a
 - Fünf-Minuten-Meldung geprüft; Laufzeitprognose bei USB erhalten, Kalibrierung gespeichert und letzte Akkuwerte während Funkpausen gekennzeichnet.
 - Optionale Nachtruhe, Katzenfotos, kompakte Übersichtskachel, Akkuwellen und manuelle Aufenthaltskorrektur ergänzt.
 - Auf die stabile ESPHome-Version 2026.10.0 aktualisiert, ausgehende verschlüsselte Verbindungen geprüft und die eingebaute Antenne korrekt eingerichtet.
+- Auf ESPHome 2026.11.0 aktualisiert, interne INA3221-Mittelung aktiviert und die Wiedergabe von Startwarnungen über WLAN geprüft; Akkuzähler erhalten.
 - Kurzfristige Laufzeitprognose durch lokale SQLite-Historie mit fortlaufendem 30-Tage-Lernen und gekennzeichneten Messlücken ersetzt; Verbrauchsübertragung nach Funkpause geprüft.
 - Nachtruhekachel abgerundet und dauerhafte Vormerkung geänderter Zeiten mit Übertragung beim Wiederverbinden ergänzt.
 - Als Nächstes: Langzeitdaten sammeln und Rahmenmontage. Tierchip-Erkennung bleibt offen.
 
 </details>
 
-Die aktuellen Firmware-Beispiele benötigen **ESPHome 2026.10.0 oder neuer**. Der installierte Prototyp wurde mit 2026.10.0 auf einem echten XIAO ESP32-C6 gebaut und geprüft; die ursprüngliche Version nutzte 2026.9.1. Mechanische Tests an der eingebauten Klappe stehen noch aus. Die Schwenkrichtung ist kein Nachweis, dass eine Katze vollständig hinein- oder hinausgelaufen ist.
+Die aktuellen Firmware-Beispiele benötigen **ESPHome 2026.11.0 oder neuer**. Der installierte Prototyp wurde mit 2026.11.0 auf einem echten XIAO ESP32-C6 gebaut und geprüft; die ursprüngliche Version nutzte 2026.9.1. Mechanische Tests an der eingebauten Klappe stehen noch aus. Die Schwenkrichtung ist kein Nachweis, dass eine Katze vollständig hinein- oder hinausgelaufen ist.
 
 Verwendet wird die **NAMSAN Fliegengitter-Katzenklappe, Größe S, Schwarz** (Außenrahmen 25 × 31,5 cm; innere Öffnung 21 × 24,5 cm laut Angebot). Die Sensormontage an dieser Klappe steht noch aus.
 
@@ -95,7 +96,7 @@ Code und Dateinamen sind auf Englisch. Das Dashboard unterstützt Deutsch und En
 
 ## Installation
 
-1. ESPHome ab 2026.10.0 und Home Assistant ab 2026.10 verwenden. Die Klappe kann nach fünf Sekunden Wartezeit selbst eine verschlüsselte API-Verbindung zu Home Assistant aufbauen; API-Verschlüsselung aktiviert lassen. Unter Diagnose kann „WLAN-Zugangspunkt prüfen“ bei Bedarf nach einem deutlich stärkeren Zugangspunkt desselben WLANs suchen; während eines Wechsels kann die Verbindung kurz unterbrechen.
+1. ESPHome ab 2026.11.0 und Home Assistant ab 2026.10 verwenden. Startwarnungen und Fehler werden gepuffert und nach dem Verbinden im Protokoll erneut ausgegeben. Die Klappe kann nach fünf Sekunden Wartezeit selbst eine verschlüsselte API-Verbindung zu Home Assistant aufbauen; API-Verschlüsselung aktiviert lassen. Unter Diagnose kann „WLAN-Zugangspunkt prüfen“ bei Bedarf nach einem deutlich stärkeren Zugangspunkt desselben WLANs suchen; während eines Wechsels kann die Verbindung kurz unterbrechen.
 2. `cat-flap.yaml` und `xiao-esp32c6-radio.yaml` in das ESPHome-Konfigurationsverzeichnis kopieren. Das Funkpaket versorgt den XIAO-Antennenschalter und wählt vor dem WLAN-Start die eingebaute Antenne; es gilt ausschließlich für den Seeed XIAO ESP32-C6. Beim Einfügen in eine vorhandene Geräte-Konfiguration den bestehenden Gerätenamen sowie WLAN-, API- und OTA-Einstellungen erhalten. Ein geänderter Gerätename kann die Zuordnung in Home Assistant ändern.
 3. `secrets.example.yaml` als **lokale** `secrets.yaml` speichern und alle Platzhalter ersetzen. Einen gültigen ESPHome-API-Schlüssel erzeugen; das Beispiel enthält absichtlich keinen nutzbaren Schlüssel.
 4. Konfiguration mit ESPHome validieren, kompilieren und erstmals per USB installieren. Das Beispiel aktiviert API-Verschlüsselung und verschlüsselte ESPHome-OTA-Updates. Die installierte Firmware und ESPHome müssen diese OTA-Funktion unterstützen.
