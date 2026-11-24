@@ -5,6 +5,34 @@ globalThis.customElements = {get: () => true};
 globalThis.window = {};
 const {languageFor, translateState, buildConfig, formatSensorValue, reportedState, nightWindow, nightDeviceOnline, nightScheduleRequest, catPhotoPath, batteryLevel, catLocation, batteryColor, batteryEstimateNotice, batteryHistoryNotice, chargingTime, SmartCatFlapCard} = await import('../frontend/smart-cat-flap-card.js');
 const {runtimeDataNotice} = await import('../frontend/smart-cat-flap-card.js');
+const {batteryDisplayState} = await import('../frontend/smart-cat-flap-card.js');
+
+test('a switched-off device cannot keep displaying a stale 31-percent battery',()=>{
+  const reading={state:{state:'31',attributes:{}},retained:true};
+  const result=batteryDisplayState({state:'stale'},reading,false,'de');
+  assert.equal(result.level,null);
+  assert.equal(result.stale,true);
+  assert.equal(result.notice,'Gerät offline · Akkustand unbekannt');
+  assert.equal(result.muted,true);
+  assert.equal(batteryDisplayState({state:'stale'},reading,false,'en').notice,'Device offline · charge unknown');
+  assert.equal(batteryDisplayState({state:'stale'},reading,true,'de').level,31);
+  reading.state.state='0';
+  assert.equal(batteryDisplayState({state:'ready'},reading,true,'de').level,0);
+  assert.equal(batteryDisplayState({state:'ready'},reading,true,'de').stale,false);
+  assert.equal(batteryDisplayState({state:'stale'},reading,false,'de').muted,false);
+  assert.equal(batteryDisplayState({state:'stale'},reading,false,'de').color,batteryColor(0));
+});
+
+test('grey offline styling waits at least fifteen minutes or three reporting intervals',()=>{
+  const now=Date.parse('2026-11-24T17:00:00Z');
+  const reading={state:{state:'31',attributes:{}},retained:true};
+  const history=age=>({state:'stale',attributes:{latest_report:now/1000-age}});
+  assert.equal(batteryDisplayState(history(899),reading,false,'de',now,5).muted,false);
+  assert.equal(batteryDisplayState(history(901),reading,false,'de',now,5).muted,true);
+  assert.equal(batteryDisplayState(history(1800),reading,false,'de',now,30).muted,false);
+  assert.equal(batteryDisplayState(history(5401),reading,false,'de',now,30).muted,true);
+  assert.equal(batteryDisplayState(history(5401),reading,true,'de',now,30).muted,false);
+});
 
 test('an old eight-hour estimate cannot override stale battery telemetry',()=>{
   const now=Date.parse('2026-11-24T17:00:00Z');

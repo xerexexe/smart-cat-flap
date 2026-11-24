@@ -443,6 +443,26 @@ export function runtimeDataNotice(history, reading, language, now = Date.now()) 
   return '';
 }
 
+export function batteryDisplayState(history, reading, connected, language, now = Date.now(), reportingMinutes = 5) {
+  const reportedLevel = batteryLevel(reading?.state?.state);
+  const interval = Number(reportingMinutes);
+  const grace = Math.max(900, (Number.isFinite(interval) && interval > 0 ? interval : 5) * 180);
+  const report = Number(history?.attributes?.latest_report);
+  const timestamp = report > 0 ? report * 1000 : Date.parse(reading?.state?.last_updated);
+  const overdue = Number.isFinite(timestamp) ? now - timestamp > grace * 1000 : history?.state === 'stale';
+  const stale = !connected && overdue;
+  const empty = reportedLevel === 0;
+  return {
+    level: stale && !empty ? null : reportedLevel,
+    stale,
+    muted: stale && !empty,
+    color: stale && !empty ? '#9ca3af' : batteryColor(reportedLevel),
+    notice: stale ? (empty
+      ? (language === 'de' ? 'Zuletzt gemeldet: Akku leer' : 'Last reported: battery empty')
+      : (language === 'de' ? 'Gerät offline · Akkustand unbekannt' : 'Device offline · charge unknown')) : '',
+  };
+}
+
 export function batteryEstimateNotice(quality, language) {
   const de = language === "de";
   if (quality === "uncertain") return de ? "Schätzung unsicher · Messlücke" : "Uncertain estimate · measurement gap";
@@ -944,7 +964,7 @@ export class SmartCatFlapCard extends HTMLElement {
         .hero{border:1px solid rgba(112,207,191,.22);background:linear-gradient(115deg,rgba(72,152,145,.16),rgba(65,85,126,.16));box-shadow:inset 0 3px 0 var(--hero-battery-color,#70cfbf);border-radius:26px;padding:28px 32px;display:grid;grid-template-columns:1fr 245px;align-items:center;gap:20px;min-height:240px;margin-bottom:18px;overflow:hidden}.status{display:inline-flex;align-items:center;gap:7px;font-size:12px;color:var(--cat-accent);margin-bottom:16px}.status-dot{width:7px;height:7px;background:currentColor;border-radius:50%}.hero h2{font-size:36px;font-weight:650;line-height:1.12;letter-spacing:-.045em;margin:0 0 12px;max-width:580px}.hero p{font-size:14px;color:var(--cat-muted);max-width:500px;line-height:1.65;margin:0}.hero svg{width:100%;max-width:245px;justify-self:end}.hero-tags{display:flex;flex-wrap:wrap;gap:8px;margin-top:20px}.tag{font-size:11px;border:1px solid var(--cat-line);border-radius:30px;padding:6px 10px;background:rgba(127,127,127,.06)}
         .cat-photo{width:220px;height:200px;object-fit:cover;border-radius:24px;justify-self:end}.cat-photo[hidden]{display:none}.photo-preview{width:54px;height:54px;border-radius:16px;object-fit:cover;background:rgba(112,207,191,.08);margin-right:12px}.photo-intro{display:flex;align-items:center;margin-bottom:14px}.photo-input{width:100%;padding:12px;border:1px solid var(--cat-line);border-radius:12px;background:var(--secondary-background-color);color:var(--primary-text-color);font:inherit;margin:12px 0 10px}.photo-save{border:0;padding:10px 15px;border-radius:12px;background:var(--cat-accent);color:#173a36;font:inherit;cursor:pointer;min-height:42px}.photo-save:disabled{opacity:.5;cursor:default}.photo-message{font-size:12px;line-height:1.6;color:var(--cat-muted);margin-top:10px}.media-link{color:var(--cat-accent)}
         .grid{display:grid;grid-template-columns:minmax(0,1.13fr) minmax(0,1fr);gap:18px;align-items:start}.column{display:grid;gap:18px;min-width:0}.panel{border:1px solid var(--cat-line);background:var(--ha-card-background,var(--card-background-color));border-radius:22px;padding:24px;min-width:0}.panel h3{font-size:18px;margin:0;font-weight:600;letter-spacing:-.02em}.panel-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:22px}.small{font-size:12px;color:var(--cat-muted);line-height:1.65}.mini-icon{color:var(--cat-accent);font-size:20px}.opening-title{font-size:27px;font-weight:650;letter-spacing:-.035em;margin:0 0 6px}.opening-date{font-size:12px;color:var(--cat-muted);min-height:20px}.flow{display:grid;grid-template-columns:1fr 1.1fr 1fr;align-items:center;text-align:center;margin:26px 0}.location{font-size:12px;color:var(--cat-muted)}.location ha-icon{display:block;margin:0 auto 8px;--mdc-icon-size:30px;color:var(--primary-text-color)}.flow-line{height:1px;background:var(--cat-line);position:relative}.flow-arrow{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);border-radius:50%;background:var(--ha-card-background,var(--card-background-color));border:1px solid var(--cat-line);color:var(--cat-accent);height:36px;width:36px;display:grid;place-items:center;font-size:21px}.metrics{display:grid;grid-template-columns:1fr 1fr;gap:16px;padding-top:18px;border-top:1px solid var(--cat-line)}.metric-value{font-size:26px;font-weight:600;letter-spacing:-.03em;margin-bottom:4px}.metric-name{font-size:11px;color:var(--cat-muted);line-height:1.5}.explanation{margin-top:18px;font-size:11px;color:var(--cat-muted);line-height:1.6}
-        .battery-main{display:flex;align-items:center;gap:22px}.battery-symbol{color:var(--battery-color,var(--cat-accent));width:100px;height:120px;flex:none;overflow:visible}.battery-liquid{opacity:0;transition:opacity .3s}.has-level .battery-liquid{opacity:1}.battery-wave{fill:var(--battery-color,var(--cat-accent));opacity:.55}.battery-wave.back{opacity:.22}.has-level .battery-wave{animation:cat-wave 3.2s linear infinite}.has-level .battery-wave.back{animation:cat-wave 4.8s linear infinite reverse}.battery-level-position{transition:transform 1.5s ease}.is-charging .battery-symbol{filter:drop-shadow(0 0 7px rgba(112,207,191,.16))}.battery-motion{font-size:11px;color:var(--cat-muted);margin-top:5px}.battery-motion[hidden]{display:none}@keyframes cat-wave{from{transform:translateX(0)}to{transform:translateX(-60px)}}@media(prefers-reduced-motion:reduce){.has-level .battery-wave,.has-level .battery-wave.back{animation:none}.battery-level-position{transition:none}}.voltage{font-size:34px;font-weight:600;letter-spacing:-.04em;margin-bottom:3px}.charge{font-size:13px;color:var(--cat-accent);line-height:1.5}.battery-meta{margin:20px 0 14px;display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}.runtime{font-size:22px;font-weight:600}.battery-warning{font-size:12px;color:var(--warning-color,#e5b668);padding:10px 12px;border-radius:10px;background:rgba(225,166,73,.1);margin-top:14px}.battery-warning[hidden]{display:none}.stamp{font-size:11px;color:var(--cat-muted);margin-top:14px}
+        .hero.is-stale,.battery.is-stale{filter:grayscale(1);opacity:.75}.battery-main{display:flex;align-items:center;gap:22px}.battery-symbol{color:var(--battery-color,var(--cat-accent));width:100px;height:120px;flex:none;overflow:visible}.battery-liquid{opacity:0;transition:opacity .3s}.has-level .battery-liquid{opacity:1}.battery-wave{fill:var(--battery-color,var(--cat-accent));opacity:.55}.battery-wave.back{opacity:.22}.has-level .battery-wave{animation:cat-wave 3.2s linear infinite}.has-level .battery-wave.back{animation:cat-wave 4.8s linear infinite reverse}.battery-level-position{transition:transform 1.5s ease}.is-charging .battery-symbol{filter:drop-shadow(0 0 7px rgba(112,207,191,.16))}.battery-motion{font-size:11px;color:var(--cat-muted);margin-top:5px}.battery-motion[hidden]{display:none}@keyframes cat-wave{from{transform:translateX(0)}to{transform:translateX(-60px)}}@media(prefers-reduced-motion:reduce){.has-level .battery-wave,.has-level .battery-wave.back{animation:none}.battery-level-position{transition:none}}.voltage{font-size:34px;font-weight:600;letter-spacing:-.04em;margin-bottom:3px}.charge{font-size:13px;color:var(--cat-accent);line-height:1.5}.battery-meta{margin:20px 0 14px;display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}.runtime{font-size:22px;font-weight:600}.battery-warning{font-size:12px;color:var(--warning-color,#e5b668);padding:10px 12px;border-radius:10px;background:rgba(225,166,73,.1);margin-top:14px}.battery-warning[hidden]{display:none}.stamp{font-size:11px;color:var(--cat-muted);margin-top:14px}
         details summary{cursor:pointer;list-style:none;display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:15px;font-weight:600;min-height:36px}details summary::-webkit-details-marker{display:none}details summary:after{content:'+';font-size:22px;color:var(--cat-muted);font-weight:400}details[open] summary:after{content:'−'}.details-copy{margin:4px 0 0;font-size:12px;line-height:1.6;color:var(--cat-muted)}.native{margin-top:16px}.native:empty{display:none}.native>*{display:block;margin-top:10px}.test-active{color:var(--warning-color,#e5b668)}.footer{font-size:11px;color:var(--cat-muted);text-align:center;margin-top:24px}.pending{color:var(--warning-color,#e5b668)}button.info{padding:0;border:0;background:none;color:inherit;font:inherit;text-align:left;cursor:pointer}button:focus-visible,summary:focus-visible{outline:2px solid var(--primary-color);outline-offset:4px}
         @media(max-width:760px){.dashboard{padding:16px 12px 28px}.grid{grid-template-columns:1fr}.hero{grid-template-columns:1fr 125px;padding:24px;min-height:215px}.hero h2{font-size:29px}.hero svg{width:135px;margin-right:-12px}.cat-photo{width:135px;height:155px}.brand h1{font-size:23px}.date{display:none}.panel{padding:22px}.column{gap:14px}.grid{gap:14px}}
         @media(max-width:420px){.hero{grid-template-columns:1fr;position:relative;min-height:235px;padding:24px}.hero svg{position:absolute;width:105px;right:10px;bottom:8px;opacity:.45}.cat-photo{width:100%;height:200px;position:static;margin-top:12px}.hero h2,.hero p{max-width:245px}.hero-tags{padding-right:65px}.battery-main{gap:14px}.voltage{font-size:30px}.masthead{margin-bottom:16px}}
@@ -1081,16 +1101,26 @@ export class SmartCatFlapCard extends HTMLElement {
     put('.charge',translateState(charge.state?.state||'unknown',language));
     const charging=charge.state?.state==='charging'&&!charge.retained&&connection==='on';
     root.querySelector('.battery').classList.toggle('is-charging',charging);
-    const levelReading=this._reading('sensor','estimated_battery_level',retain),level=batteryLevel(levelReading.state?.state);
+    const historyState=this._hass.states[this._entity('sensor','history_model_status')];
+    const levelReading=this._reading('sensor','estimated_battery_level',retain);
+    const batteryDisplay=batteryDisplayState(historyState,levelReading,connection==='on',language,Date.now(),this._reading('number','reporting_interval',true).state?.state),level=batteryDisplay.level;
     const quality=this._reading('sensor','battery_estimate_quality',retain),qualityState=quality.state?.state,estimateNotice=batteryEstimateNotice(qualityState,language);
     root.querySelector('.battery').classList.toggle('has-level',level!==null&&level>0);
-    root.querySelector('.battery').style.setProperty('--battery-color',batteryColor(level));
-    root.querySelector('.hero').style.setProperty('--hero-battery-color',batteryColor(level));
+    root.querySelector('.battery').style.setProperty('--battery-color',batteryDisplay.color);
+    root.querySelector('.battery').classList.toggle('is-stale',batteryDisplay.muted);
+    root.querySelector('.hero').classList.toggle('is-stale',batteryDisplay.muted);
+    root.querySelector('.hero').style.setProperty('--hero-battery-color',batteryDisplay.color);
     root.querySelector('.battery-level-position').style.transform=`translate(20px,${level===100?17:23+83*(1-(level??0)/100)}px)`;
     root.querySelector('.battery-motion').hidden=false;
-    put('.battery-motion',level===null?(estimateNotice||t('Charge level unknown · calibration needed','Ladestand unbekannt · Kalibrierung nötig')):`${new Intl.NumberFormat(language,{maximumFractionDigits:0}).format(level)} % · ${t('estimated charge','geschätzter Ladestand')}`);
-    root.querySelector('.battery-bolt').style.opacity=charge.state?.state==='charging'?'1':'.15';
-    const historyState=this._hass.states[this._entity('sensor','history_model_status')];
+    put('.battery-motion',batteryDisplay.notice|| (level===null?(estimateNotice||t('Charge level unknown · calibration needed','Ladestand unbekannt · Kalibrierung nötig')):`${new Intl.NumberFormat(language,{maximumFractionDigits:0}).format(level)} % · ${t('estimated charge','geschätzter Ladestand')}`));
+    if(batteryDisplay.stale){
+      put('.voltage','—');
+      put('.power-tag',t('No current battery readings','Keine aktuellen Akkuwerte'));
+      put('.charge',t('Device offline','Gerät offline'));
+      root.querySelector('.battery').style.setProperty('--battery-color',batteryDisplay.color);
+      root.querySelector('.hero').style.setProperty('--hero-battery-color',batteryDisplay.color);
+    }
+    root.querySelector('.battery-bolt').style.opacity=charging?'1':'.15';
     const learningNotice=batteryHistoryNotice(historyState,language);
     put('.runtime',learningNotice&&historyState?.state!=='partial'?learningNotice:formatSensorValue(runtime.state||{state:'unknown'},this._entity('sensor','estimated_runtime'),language));
     put('.battery-meta .small',historyState?.state==='learning'?t('Consumption is being recorded','Verbrauch wird aufgezeichnet'):t('estimated on battery','geschätzt im Akkubetrieb'));
@@ -1101,8 +1131,8 @@ export class SmartCatFlapCard extends HTMLElement {
     root.querySelector('.battery-meta').setAttribute('aria-label',chargeTime?`${chargeTime.label}: ${chargeTime.value}. ${chargeTime.note}`:'');
     const low=raw('binary_sensor','battery_low')==='on';
     const uncertain=qualityState==='uncertain'||historyState?.state==='partial';
-    root.querySelector('.battery-warning').hidden=!low&&!uncertain;
-    put('.battery-warning',[low?t('Battery low. Please allow it to recharge.','Akku niedrig. Bitte wieder aufladen lassen.'):'',uncertain?t('Estimate uncertain: charging and consumption during measurement gaps are not included. The saved full reference is retained.','Schätzung unsicher: Ladung und Verbrauch während Messlücken sind nicht enthalten. Der Vollpunkt bleibt gespeichert.'):''].filter(Boolean).join(' '));
+    root.querySelector('.battery-warning').hidden=!low&&!uncertain&&!batteryDisplay.stale;
+    put('.battery-warning',[batteryDisplay.notice,low?t('Battery low. Please allow it to recharge.','Akku niedrig. Bitte wieder aufladen lassen.'):'',uncertain?t('Estimate uncertain: charging and consumption during measurement gaps are not included. The saved full reference is retained.','Schätzung unsicher: Ladung und Verbrauch während Messlücken sind nicht enthalten. Der Vollpunkt bleibt gespeichert.'):''].filter(Boolean).join(' '));
     const retained=[voltage,source,charge,runtime,levelReading,quality].filter(r=>r.retained);
     const stamps=retained.map(r=>Date.parse(r.state?.last_updated)).filter(Number.isFinite);
     put('.stamp',retained.length?`${t('Last reported','Zuletzt gemeldet')}${stamps.length?' · '+new Date(Math.min(...stamps)).toLocaleString(language):''}`:t('Readings from the device','Messwerte vom Gerät'));
@@ -1146,7 +1176,7 @@ class SmartCatFlapCompactCard extends SmartCatFlapCard {
     this.shadowRoot.innerHTML=`<style>
       :host{display:block;--cat-accent:#70cfbf;color:var(--primary-text-color)}*{box-sizing:border-box}
       ha-card{border-radius:18px;padding:18px 20px;background:var(--ha-card-background,var(--card-background-color));border:1px solid var(--divider-color);overflow:hidden}
-      .top{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}h2{font-size:18px;font-weight:600;margin:0;letter-spacing:-.02em}.title{display:flex;align-items:center;gap:8px}.cat-photo{width:28px;height:28px;object-fit:cover;border-radius:9px;border:1px solid var(--cat-accent)}.cat-photo[hidden]{display:none}.title ha-icon{color:var(--cat-accent);--mdc-icon-size:21px}.connection{font-size:10px;display:flex;gap:5px;align-items:center;color:var(--cat-accent)}.dot{width:6px;height:6px;border-radius:50%;background:currentColor;flex:none}
+      ha-card.is-stale{filter:grayscale(1);opacity:.75}.top{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}h2{font-size:18px;font-weight:600;margin:0;letter-spacing:-.02em}.title{display:flex;align-items:center;gap:8px}.cat-photo{width:28px;height:28px;object-fit:cover;border-radius:9px;border:1px solid var(--cat-accent)}.cat-photo[hidden]{display:none}.title ha-icon{color:var(--cat-accent);--mdc-icon-size:21px}.connection{font-size:10px;display:flex;gap:5px;align-items:center;color:var(--cat-accent)}.dot{width:6px;height:6px;border-radius:50%;background:currentColor;flex:none}
       .body{display:grid;grid-template-columns:minmax(0,1fr) 62px auto;align-items:center;gap:12px}.status{max-width:50%;font-size:15px;font-weight:550;line-height:1.4}.direction{max-width:50%}.direction,.charge,.stamp{font-size:11px;color:var(--secondary-text-color);line-height:1.6;margin-top:4px}.percent{font-size:24px;letter-spacing:-.035em;font-weight:600}.voltage{font-size:11px;color:var(--secondary-text-color);margin-top:4px}.battery{width:56px;height:70px;color:var(--battery-color,var(--cat-accent))}.liquid{opacity:0}.has-level .liquid{opacity:1}.wave{fill:var(--battery-color,var(--cat-accent));opacity:.55}.wave.back{opacity:.22}.has-level .wave{animation:cat-compact-wave 3.2s linear infinite}.has-level .wave.back{animation:cat-compact-wave 4.8s linear infinite reverse}.level{transition:transform 1.5s ease}.bottom{display:flex;justify-content:space-between;gap:10px;align-items:center;margin-top:12px;border-top:1px solid var(--divider-color);padding-top:10px}.charge{margin:0}.bottom>div{min-width:0;flex:1}.more{flex:none}.runtime{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:11px;color:var(--secondary-text-color);line-height:1.5;margin-top:3px}.more{font-size:11px;color:var(--cat-accent);text-decoration:none;padding:3px 0}.stamp:empty{display:none}.warning{color:var(--warning-color,#e7b865)}
       @keyframes cat-compact-wave{from{transform:translateX(0)}to{transform:translateX(-60px)}}@media(prefers-reduced-motion:reduce){.has-level .wave,.has-level .wave.back{animation:none}.level{transition:none}}@media(max-width:340px){ha-card{padding:16px}.body{gap:8px;grid-template-columns:minmax(0,1fr) 46px auto}.battery{width:44px}.connection{font-size:9px}.percent{font-size:21px}}
       </style><ha-card><div class="top"><div class="title"><img class="cat-photo" hidden alt="${t('Your cat','Deine Katze')}"><ha-icon icon="mdi:cat"></ha-icon><h2>${t('Cat flap','Katzenklappe')}</h2></div><span class="connection"><i class="dot"></i><span class="connection-label"></span></span></div><div class="body"><div><div class="status"></div><div class="direction"></div><div class="location-slot"></div></div><svg class="battery" viewBox="0 0 100 120" aria-hidden="true"><rect x="35" y="5" width="30" height="8" rx="4" fill="currentColor"/><rect x="14" y="17" width="72" height="95" rx="17" fill="rgba(112,207,191,.08)" stroke="currentColor" stroke-width="2"/><defs><clipPath id="compact-battery"><rect x="20" y="23" width="60" height="83" rx="12"/></clipPath></defs><g class="liquid" clip-path="url(#compact-battery)"><g class="level"><path class="wave back" d="M-60 0 Q-45 -5 -30 0 T0 0 T30 0 T60 0 T90 0 T120 0 T150 0 T180 0 V160 H-60Z"/><path class="wave" d="M-60 0 Q-45 -5 -30 0 T0 0 T30 0 T60 0 T90 0 T120 0 T150 0 T180 0 V160 H-60Z"/></g></g><path class="bolt" d="m54 37-20 31h15l-3 23 22-33H52Z" fill="currentColor"/></svg><div><div class="percent"></div><div class="voltage"></div></div></div><div class="bottom"><div><div class="charge"></div><div class="runtime"></div></div><a class="more" href="/katzenklappe-smart/klappe">${t('Details →','Details →')}</a></div><div class="stamp"></div></ha-card>`;
@@ -1169,7 +1199,9 @@ class SmartCatFlapCompactCard extends SmartCatFlapCard {
     put('.status',test?t('Test mode','Testmodus'):!connected?t('Last reported status','Zuletzt gemeldeter Stand'):ready?t('Detection ready','Erkennung bereit'):t('Checking flap','Klappe wird geprüft'));
     const direction=raw('sensor','last_opening_direction');
     put('.direction',direction==='inside'||direction==='innen'?t('Last opening: inward','Zuletzt nach innen geöffnet'):direction==='outside'||direction==='aussen'?t('Last opening: outward','Zuletzt nach außen geöffnet'):direction==='unclear'||direction==='unklar'?t('Last direction unclear','Letzte Richtung unklar'):t('No opening reported yet','Noch keine Öffnung gemeldet'));
-    const voltage=this._reading('sensor','battery_voltage',true),charge=this._reading('sensor','charging_status',true),levelReading=this._reading('sensor','estimated_battery_level',true),source=this._reading('sensor','power_source',true),level=batteryLevel(levelReading.state?.state);
+    const voltage=this._reading('sensor','battery_voltage',true),charge=this._reading('sensor','charging_status',true),levelReading=this._reading('sensor','estimated_battery_level',true),source=this._reading('sensor','power_source',true);
+    const historyState=this._hass.states[this._entity('sensor','history_model_status')];
+    const batteryDisplay=batteryDisplayState(historyState,levelReading,connected,language,Date.now(),this._reading('number','reporting_interval',true).state?.state),level=batteryDisplay.level;
     const historyRuntime=this._reading('sensor','estimated_runtime',true);
     const runtimePrefix=this._config.entity_prefix||(this._config.legacy?'katzenklappe':'smart_cat_flap');
     const deviceRuntime=this._reading('sensor','estimated_runtime',true,`sensor.${runtimePrefix}_estimated_runtime`);
@@ -1178,16 +1210,22 @@ class SmartCatFlapCompactCard extends SmartCatFlapCard {
     const quality=this._reading('sensor','battery_estimate_quality',true),estimateNotice=batteryEstimateNotice(quality.state?.state,language);
     const charging=connected&&!charge.retained&&charge.state?.state==='charging',card=root.querySelector('ha-card');
     card.classList.toggle('is-charging',charging);card.classList.toggle('has-level',level!==null&&level>0);
-    card.style.setProperty('--battery-color',batteryColor(level));
+    card.style.setProperty('--battery-color',batteryDisplay.color);
+    card.classList.toggle('is-stale',batteryDisplay.muted);
     root.querySelector('.level').style.transform=`translate(20px,${level===100?17:23+83*(1-(level??0)/100)}px)`;
     root.querySelector('.bolt').style.opacity=charging?'1':'.12';
     put('.percent',level===null?'—':`${new Intl.NumberFormat(language,{maximumFractionDigits:0}).format(level)} %`);
     root.querySelector('.percent').title=estimateNotice||t('Estimated charge from full calibration','Geschätzter Ladestand seit Voll-Kalibrierung');
     put('.voltage',formatSensorValue(voltage.state||{state:'unknown'},this._entity('sensor','battery_voltage'),language));
     const power=source.state?.state==='usb'?'USB':source.state?.state==='battery'?t('Battery','Akku'):t('Source unknown','Quelle unbekannt');
-    put('.charge',`${power} · ${translateState(charge.state?.state||'unknown',language)}`);
-    root.querySelector('.charge').classList.toggle('warning',raw('binary_sensor','battery_low')==='on');
-    const historyState=this._hass.states[this._entity('sensor','history_model_status')],learningNotice=batteryHistoryNotice(historyState,language);
+    put('.charge',batteryDisplay.notice||`${power} · ${translateState(charge.state?.state||'unknown',language)}`);
+    root.querySelector('.charge').classList.toggle('warning',batteryDisplay.stale||raw('binary_sensor','battery_low')==='on');
+    if(batteryDisplay.stale){
+      put('.voltage','—');
+      root.querySelector('.percent').title=batteryDisplay.notice;
+      card.style.setProperty('--battery-color',batteryDisplay.color);
+    }
+    const learningNotice=batteryHistoryNotice(historyState,language);
     const runtimeNotice=runtimeDataNotice(historyState,runtime,language);
     const runtimeHours=!runtimeNotice&&positiveRuntime(runtime)?Number(runtime.state.state):null;
     const runtimeUnit=runtime.state?.attributes?.unit_of_measurement||'h';

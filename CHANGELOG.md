@@ -2,6 +2,8 @@
 
 ## Unreleased — 2026-11-24
 
+- Hide stale battery percentages, voltage and active discharge labels in both dashboard sizes. Grey the offline overview and energy/status panels only after at least 15 minutes or three configured reporting intervals without a report. Retain red for a reported empty battery; distinguish missing communication from measured 0%. Historical measurements remain in diagnostic rows.
+
 - Stop the compact overview from showing a cached positive runtime when the history reports stale/missing data or storage errors. Check report age and retained fallback age against the existing 15-minute freshness window; ordinary five-minute radio pauses remain supported. Preserve the installed compact layout and preliminary-runtime formatting.
 
 ## Unreleased — 2026-11-19
