@@ -4,6 +4,26 @@ globalThis.HTMLElement = class {};
 globalThis.customElements = {get: () => true};
 globalThis.window = {};
 const {languageFor, translateState, buildConfig, formatSensorValue, reportedState, nightWindow, nightDeviceOnline, nightScheduleRequest, catPhotoPath, batteryLevel, catLocation, batteryColor, batteryEstimateNotice, batteryHistoryNotice, chargingTime, SmartCatFlapCard} = await import('../frontend/smart-cat-flap-card.js');
+const {runtimeDataNotice} = await import('../frontend/smart-cat-flap-card.js');
+
+test('an old eight-hour estimate cannot override stale battery telemetry',()=>{
+  const now=Date.parse('2026-11-24T17:00:00Z');
+  const reading={state:{state:'8',last_updated:'2026-11-21T17:00:00Z',attributes:{}},retained:true};
+  assert.equal(runtimeDataNotice({state:'stale'},reading,'de',now),'Neue Akkuwerte fehlen');
+  assert.equal(runtimeDataNotice({state:'stale'},reading,'en',now),'Awaiting battery readings');
+  assert.equal(runtimeDataNotice({state:'ready',attributes:{latest_report:now/1000-901}},reading,'de',now),'Neue Akkuwerte fehlen');
+  assert.equal(runtimeDataNotice(null,reading,'de',now),'Neue Akkuwerte fehlen');
+  assert.match(runtimeDataNotice({state:'storage_error'},reading,'de',now),/Speicherfehler/);
+});
+
+test('normal five-minute radio pauses and unchanged estimates with fresh reports remain valid',()=>{
+  const now=Date.parse('2026-11-24T17:00:00Z');
+  const reading={state:{state:'8',last_updated:'2026-11-21T17:00:00Z',attributes:{}},retained:true};
+  for(const status of ['ready','partial','learning'])
+    assert.equal(runtimeDataNotice({state:status,attributes:{latest_report:now/1000-300}},reading,'de',now),'');
+  reading.state.attributes.sample_age_hours=1;
+  assert.equal(runtimeDataNotice({state:'ready'},reading,'de',now),'Neue Akkuwerte fehlen');
+});
 
 function chargingStates(prefix='cat', legacy=false) {
   const state=(value,unit)=>({state:String(value),attributes:{unit_of_measurement:unit}});

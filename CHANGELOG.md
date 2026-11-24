@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased — 2026-11-24
+
+- Stop the compact overview from showing a cached positive runtime when the history reports stale/missing data or storage errors. Check report age and retained fallback age against the existing 15-minute freshness window; ordinary five-minute radio pauses remain supported. Preserve the installed compact layout and preliminary-runtime formatting.
+
 ## Unreleased — 2026-11-19
 
 - Upgrade the prototype over encrypted OTA and require ESPHome 2026.11.0 for the main example and INA3221 package. Average 16 ADC conversions internally while retaining continuous measurements, the 8244 µs conversion time and five-second polling. Add a 4 kB warning/error boot-log buffer replayed two seconds after an API client connects. Single-shot mode remains disabled so brief radio loads are not deliberately left unobserved between polls. Verify 19 finite current reports over 90 seconds (maximum interval 5.01 seconds), INA configuration register 0x45FF, successful boot-log replay with no dropped lines, retained battery level and cumulative history counters. Long-term measurement reliability remains under observation.

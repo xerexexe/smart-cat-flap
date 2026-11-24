@@ -430,6 +430,19 @@ export function batteryHistoryNotice(state, language) {
 }
 
 // Quality describes the saved estimate, separately from live sensor availability.
+// A cached positive number must not override stale telemetry or a storage fault.
+export function runtimeDataNotice(history, reading, language, now = Date.now()) {
+  if (['stale', 'no_data', 'storage_error', 'unknown', 'unavailable'].includes(history?.state))
+    return batteryHistoryNotice(history, language);
+  const report = Number(history?.attributes?.latest_report);
+  const age = Number(reading?.state?.attributes?.sample_age_hours);
+  const updated = Date.parse(reading?.state?.last_updated);
+  if ((report > 0 && now / 1000 - report > 900) || age > 0.25 ||
+      (reading?.retained && !(report > 0) && Number.isFinite(updated) && now - updated > 900000))
+    return batteryHistoryNotice({state: 'stale'}, language);
+  return '';
+}
+
 export function batteryEstimateNotice(quality, language) {
   const de = language === "de";
   if (quality === "uncertain") return de ? "Schätzung unsicher · Messlücke" : "Uncertain estimate · measurement gap";
@@ -1026,8 +1039,8 @@ export class SmartCatFlapCard extends HTMLElement {
   }
   _entity(domain,key){const prefix=this._config.entity_prefix||(this._config.legacy?'katzenklappe':'smart_cat_flap');if(domain==='sensor'&&key==='estimated_runtime'&&this._hass?.states[`sensor.${prefix}_history_runtime`])return `sensor.${prefix}_history_runtime`;return `${domain}.${prefix}_${this._config.legacy?(LEGACY[key]||key):key}`;}
   _chargingTime(charge) {return chargingTime(this._hass.states,this._config.entity_prefix||(this._config.legacy?'katzenklappe':'smart_cat_flap'),this._config.legacy,this._language,charge);}
-  _reading(domain,key,retain=false){
-    const entity=this._entity(domain,key),current=this._hass.states[entity];
+  _reading(domain,key,retain=false,entityOverride=null){
+    const entity=entityOverride||this._entity(domain,key),current=this._hass.states[entity];
     if(!retain)return {state:current,retained:false};
     this._reports=this._reports||{};
     if(!this._reports[entity]){try{this._reports[entity]=JSON.parse(localStorage.getItem(`smart-cat-flap-report:v1:${entity}`));}catch(_){}}
@@ -1134,7 +1147,7 @@ class SmartCatFlapCompactCard extends SmartCatFlapCard {
       :host{display:block;--cat-accent:#70cfbf;color:var(--primary-text-color)}*{box-sizing:border-box}
       ha-card{border-radius:18px;padding:18px 20px;background:var(--ha-card-background,var(--card-background-color));border:1px solid var(--divider-color);overflow:hidden}
       .top{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}h2{font-size:18px;font-weight:600;margin:0;letter-spacing:-.02em}.title{display:flex;align-items:center;gap:8px}.cat-photo{width:28px;height:28px;object-fit:cover;border-radius:9px;border:1px solid var(--cat-accent)}.cat-photo[hidden]{display:none}.title ha-icon{color:var(--cat-accent);--mdc-icon-size:21px}.connection{font-size:10px;display:flex;gap:5px;align-items:center;color:var(--cat-accent)}.dot{width:6px;height:6px;border-radius:50%;background:currentColor;flex:none}
-      .body{display:grid;grid-template-columns:minmax(0,1fr) 62px auto;align-items:center;gap:12px}.status{max-width:50%;font-size:15px;font-weight:550;line-height:1.4}.direction{max-width:50%}.direction,.charge,.stamp{font-size:11px;color:var(--secondary-text-color);line-height:1.6;margin-top:4px}.percent{font-size:24px;letter-spacing:-.035em;font-weight:600}.voltage{font-size:11px;color:var(--secondary-text-color);margin-top:4px}.battery{width:56px;height:70px;color:var(--battery-color,var(--cat-accent))}.liquid{opacity:0}.has-level .liquid{opacity:1}.wave{fill:var(--battery-color,var(--cat-accent));opacity:.55}.wave.back{opacity:.22}.has-level .wave{animation:cat-compact-wave 3.2s linear infinite}.has-level .wave.back{animation:cat-compact-wave 4.8s linear infinite reverse}.level{transition:transform 1.5s ease}.bottom{display:flex;justify-content:space-between;gap:10px;align-items:center;margin-top:12px;border-top:1px solid var(--divider-color);padding-top:10px}.charge{margin:0}.runtime{font-size:11px;color:var(--secondary-text-color);line-height:1.5;margin-top:3px}.more{font-size:11px;color:var(--cat-accent);text-decoration:none;padding:3px 0}.stamp:empty{display:none}.warning{color:var(--warning-color,#e7b865)}
+      .body{display:grid;grid-template-columns:minmax(0,1fr) 62px auto;align-items:center;gap:12px}.status{max-width:50%;font-size:15px;font-weight:550;line-height:1.4}.direction{max-width:50%}.direction,.charge,.stamp{font-size:11px;color:var(--secondary-text-color);line-height:1.6;margin-top:4px}.percent{font-size:24px;letter-spacing:-.035em;font-weight:600}.voltage{font-size:11px;color:var(--secondary-text-color);margin-top:4px}.battery{width:56px;height:70px;color:var(--battery-color,var(--cat-accent))}.liquid{opacity:0}.has-level .liquid{opacity:1}.wave{fill:var(--battery-color,var(--cat-accent));opacity:.55}.wave.back{opacity:.22}.has-level .wave{animation:cat-compact-wave 3.2s linear infinite}.has-level .wave.back{animation:cat-compact-wave 4.8s linear infinite reverse}.level{transition:transform 1.5s ease}.bottom{display:flex;justify-content:space-between;gap:10px;align-items:center;margin-top:12px;border-top:1px solid var(--divider-color);padding-top:10px}.charge{margin:0}.bottom>div{min-width:0;flex:1}.more{flex:none}.runtime{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:11px;color:var(--secondary-text-color);line-height:1.5;margin-top:3px}.more{font-size:11px;color:var(--cat-accent);text-decoration:none;padding:3px 0}.stamp:empty{display:none}.warning{color:var(--warning-color,#e7b865)}
       @keyframes cat-compact-wave{from{transform:translateX(0)}to{transform:translateX(-60px)}}@media(prefers-reduced-motion:reduce){.has-level .wave,.has-level .wave.back{animation:none}.level{transition:none}}@media(max-width:340px){ha-card{padding:16px}.body{gap:8px;grid-template-columns:minmax(0,1fr) 46px auto}.battery{width:44px}.connection{font-size:9px}.percent{font-size:21px}}
       </style><ha-card><div class="top"><div class="title"><img class="cat-photo" hidden alt="${t('Your cat','Deine Katze')}"><ha-icon icon="mdi:cat"></ha-icon><h2>${t('Cat flap','Katzenklappe')}</h2></div><span class="connection"><i class="dot"></i><span class="connection-label"></span></span></div><div class="body"><div><div class="status"></div><div class="direction"></div><div class="location-slot"></div></div><svg class="battery" viewBox="0 0 100 120" aria-hidden="true"><rect x="35" y="5" width="30" height="8" rx="4" fill="currentColor"/><rect x="14" y="17" width="72" height="95" rx="17" fill="rgba(112,207,191,.08)" stroke="currentColor" stroke-width="2"/><defs><clipPath id="compact-battery"><rect x="20" y="23" width="60" height="83" rx="12"/></clipPath></defs><g class="liquid" clip-path="url(#compact-battery)"><g class="level"><path class="wave back" d="M-60 0 Q-45 -5 -30 0 T0 0 T30 0 T60 0 T90 0 T120 0 T150 0 T180 0 V160 H-60Z"/><path class="wave" d="M-60 0 Q-45 -5 -30 0 T0 0 T30 0 T60 0 T90 0 T120 0 T150 0 T180 0 V160 H-60Z"/></g></g><path class="bolt" d="m54 37-20 31h15l-3 23 22-33H52Z" fill="currentColor"/></svg><div><div class="percent"></div><div class="voltage"></div></div></div><div class="bottom"><div><div class="charge"></div><div class="runtime"></div></div><a class="more" href="/katzenklappe-smart/klappe">${t('Details →','Details →')}</a></div><div class="stamp"></div></ha-card>`;
     this._photoPath=undefined;
@@ -1157,7 +1170,11 @@ class SmartCatFlapCompactCard extends SmartCatFlapCard {
     const direction=raw('sensor','last_opening_direction');
     put('.direction',direction==='inside'||direction==='innen'?t('Last opening: inward','Zuletzt nach innen geöffnet'):direction==='outside'||direction==='aussen'?t('Last opening: outward','Zuletzt nach außen geöffnet'):direction==='unclear'||direction==='unklar'?t('Last direction unclear','Letzte Richtung unklar'):t('No opening reported yet','Noch keine Öffnung gemeldet'));
     const voltage=this._reading('sensor','battery_voltage',true),charge=this._reading('sensor','charging_status',true),levelReading=this._reading('sensor','estimated_battery_level',true),source=this._reading('sensor','power_source',true),level=batteryLevel(levelReading.state?.state);
-    const runtime=this._reading('sensor','estimated_runtime',true);
+    const historyRuntime=this._reading('sensor','estimated_runtime',true);
+    const runtimePrefix=this._config.entity_prefix||(this._config.legacy?'katzenklappe':'smart_cat_flap');
+    const deviceRuntime=this._reading('sensor','estimated_runtime',true,`sensor.${runtimePrefix}_estimated_runtime`);
+    const positiveRuntime=r=>r.state?.state!=null&&String(r.state.state).trim()!==''&&Number.isFinite(Number(r.state.state))&&Number(r.state.state)>0;
+    const runtime=positiveRuntime(historyRuntime)?historyRuntime:positiveRuntime(deviceRuntime)?deviceRuntime:historyRuntime;
     const quality=this._reading('sensor','battery_estimate_quality',true),estimateNotice=batteryEstimateNotice(quality.state?.state,language);
     const charging=connected&&!charge.retained&&charge.state?.state==='charging',card=root.querySelector('ha-card');
     card.classList.toggle('is-charging',charging);card.classList.toggle('has-level',level!==null&&level>0);
@@ -1171,10 +1188,19 @@ class SmartCatFlapCompactCard extends SmartCatFlapCard {
     put('.charge',`${power} · ${translateState(charge.state?.state||'unknown',language)}`);
     root.querySelector('.charge').classList.toggle('warning',raw('binary_sensor','battery_low')==='on');
     const historyState=this._hass.states[this._entity('sensor','history_model_status')],learningNotice=batteryHistoryNotice(historyState,language);
-    put('.runtime',learningNotice&&historyState?.state!=='partial'?learningNotice:`${t('Estimated runtime','Geschätzte Restlaufzeit')}: ${formatSensorValue(runtime.state||{state:'unknown'},this._entity('sensor','estimated_runtime'),language)}`);
+    const runtimeNotice=runtimeDataNotice(historyState,runtime,language);
+    const runtimeHours=!runtimeNotice&&positiveRuntime(runtime)?Number(runtime.state.state):null;
+    const runtimeUnit=runtime.state?.attributes?.unit_of_measurement||'h';
+    const hours=runtimeHours===null?null:runtimeUnit==='d'?runtimeHours*24:runtimeUnit==='min'?runtimeHours/60:runtimeHours;
+    const provisional=historyRuntime.state?.attributes?.is_provisional===true||historyState?.state==='learning'||!positiveRuntime(historyRuntime);
+    const shortTime=hours===null?'':hours>=48?`${Math.floor(hours/24)} ${t('d','T')}`:hours>=1?`${Math.floor(hours)} ${t('h','Std.')}`:`${Math.max(1,Math.round(hours*60))} Min.`;
+    const learningDays=Math.floor(Number(historyState?.attributes?.learning_days)||0);
+    const runtimeCaption=hours===null?`${t('Runtime being estimated','Restzeit wird ermittelt')}${historyState?.state==='learning'?` · ${learningDays}/30 ${t('days','Tage')}`:''}`:`${t('Remaining','Restzeit')}: ${t('about','ca.')} ${shortTime}${provisional?` · ${t('preliminary','vorläufig')}`:''}`;
+    put('.runtime',runtimeNotice||runtimeCaption);
+    root.querySelector('.runtime').title=[runtimeNotice,hours===null?t('No valid runtime estimate is available yet.','Noch keine gültige Restlaufzeitschätzung verfügbar.'):formatSensorValue(runtime.state,this._entity('sensor','estimated_runtime'),language),learningNotice,estimateNotice,Number(runtime.state?.attributes?.sample_age_hours)>0.25?t('Based on the last battery report','Basis: zuletzt gemeldeter Akkustand'):'',runtime.retained?t('Last reported estimate during radio pause','Zuletzt gemeldete Schätzung während der Funkpause'):''].filter(Boolean).join(' · ');
     const chargeTime=this._chargingTime(charge.state);
     if(chargeTime)put('.runtime',`${t('Until full','Bis voll')}: ${chargeTime.value}`);
-    root.querySelector('.runtime').title=chargeTime?.note||'';
+    if(chargeTime)root.querySelector('.runtime').title=chargeTime.note;
     const retained=[voltage,charge,levelReading,source,quality,runtime].filter(r=>r.retained),times=retained.map(r=>Date.parse(r.state?.last_updated)).filter(Number.isFinite);
     put('.stamp',[estimateNotice,retained.length?`${t('Last reported','Zuletzt gemeldet')}${times.length?' · '+new Date(Math.min(...times)).toLocaleString(language):''}`:''].filter(Boolean).join(' · '));
     const path=catPhotoPath(this._hass.states[this._config.cat_photo_entity||'input_text.smart_cat_flap_cat_photo']?.state);
